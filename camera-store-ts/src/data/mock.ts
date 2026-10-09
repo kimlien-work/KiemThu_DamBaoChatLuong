@@ -15,9 +15,12 @@ export const products: Product[] = [
     giagoc: 65000000,
     giaban: 59900000,
     soluongton: 8,
-    hinhanh: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=600",
+    hinhanh:
+      "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=600",
     danhmuc_id: 2,
     luotxem: 245,
+    luotmua: 12,
+    trangthai: "Còn hàng",
   },
   {
     id: 2,
@@ -26,9 +29,12 @@ export const products: Product[] = [
     giagoc: 58000000,
     giaban: 54900000,
     soluongton: 12,
-    hinhanh: "https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=600",
+    hinhanh:
+      "https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=600",
     danhmuc_id: 2,
     luotxem: 312,
+    luotmua: 25,
+    trangthai: "Còn hàng",
   },
   {
     id: 3,
@@ -37,9 +43,12 @@ export const products: Product[] = [
     giagoc: 48000000,
     giaban: 42900000,
     soluongton: 6,
-    hinhanh: "https://images.unsplash.com/photo-1606983340126-99ab4feaa64a?w=600",
+    hinhanh:
+      "https://images.unsplash.com/photo-1606983340126-99ab4feaa64a?w=600",
     danhmuc_id: 2,
     luotxem: 178,
+    luotmua: 8,
+    trangthai: "Còn hàng",
   },
   {
     id: 4,
@@ -48,9 +57,12 @@ export const products: Product[] = [
     giagoc: 28000000,
     giaban: 24900000,
     soluongton: 15,
-    hinhanh: "https://images.unsplash.com/photo-1495707902641-75cac588d2e9?w=600",
+    hinhanh:
+      "https://images.unsplash.com/photo-1495707902641-75cac588d2e9?w=600",
     danhmuc_id: 1,
     luotxem: 421,
+    luotmua: 30,
+    trangthai: "Còn hàng",
   },
   {
     id: 5,
@@ -59,9 +71,12 @@ export const products: Product[] = [
     giagoc: 55000000,
     giaban: 49900000,
     soluongton: 4,
-    hinhanh: "https://images.unsplash.com/photo-1510127034890-ba275aec2e2c?w=600",
+    hinhanh:
+      "https://images.unsplash.com/photo-1510127034890-ba275aec2e2c?w=600",
     danhmuc_id: 1,
     luotxem: 289,
+    luotmua: 14,
+    trangthai: "Còn hàng",
   },
   {
     id: 6,
@@ -70,9 +85,12 @@ export const products: Product[] = [
     giagoc: 52000000,
     giaban: 48900000,
     soluongton: 7,
-    hinhanh: "https://images.unsplash.com/photo-1606986628253-ef9fd6f2f2b8?w=600",
+    hinhanh:
+      "https://images.unsplash.com/photo-1606986628253-ef9fd6f2f2b8?w=600",
     danhmuc_id: 3,
     luotxem: 156,
+    luotmua: 9,
+    trangthai: "Còn hàng",
   },
   {
     id: 7,
@@ -81,9 +99,12 @@ export const products: Product[] = [
     giagoc: 45000000,
     giaban: 42900000,
     soluongton: 5,
-    hinhanh: "https://images.unsplash.com/photo-1617005082133-548c4dd27f35?w=600",
+    hinhanh:
+      "https://images.unsplash.com/photo-1617005082133-548c4dd27f35?w=600",
     danhmuc_id: 3,
     luotxem: 203,
+    luotmua: 11,
+    trangthai: "Còn hàng",
   },
   {
     id: 8,
@@ -92,9 +113,12 @@ export const products: Product[] = [
     giagoc: 15000000,
     giaban: 13500000,
     soluongton: 0,
-    hinhanh: "https://images.unsplash.com/photo-1606220945770-b5b6c2c55bf1?w=600",
+    hinhanh:
+      "https://images.unsplash.com/photo-1606220945770-b5b6c2c55bf1?w=600",
     danhmuc_id: 3,
     luotxem: 98,
+    luotmua: 15,
+    trangthai: "Hết hàng",
   },
   {
     id: 9,
@@ -103,9 +127,12 @@ export const products: Product[] = [
     giagoc: 1800000,
     giaban: 1590000,
     soluongton: 30,
-    hinhanh: "https://images.unsplash.com/photo-1593642632823-8f785ba67e45?w=600",
+    hinhanh:
+      "https://images.unsplash.com/photo-1593642632823-8f785ba67e45?w=600",
     danhmuc_id: 4,
     luotxem: 87,
+    luotmua: 40,
+    trangthai: "Còn hàng",
   },
   {
     id: 10,
@@ -114,9 +141,12 @@ export const products: Product[] = [
     giagoc: 1200000,
     giaban: 990000,
     soluongton: 50,
-    hinhanh: "https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?w=600",
+    hinhanh:
+      "https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?w=600",
     danhmuc_id: 4,
     luotxem: 142,
+    luotmua: 60,
+    trangthai: "Còn hàng",
   },
   {
     id: 11,
@@ -125,9 +155,12 @@ export const products: Product[] = [
     giagoc: 5500000,
     giaban: 4990000,
     soluongton: 18,
-    hinhanh: "https://images.unsplash.com/photo-1519638831568-d9897f54ed69?w=600",
+    hinhanh:
+      "https://images.unsplash.com/photo-1519638831568-d9897f54ed69?w=600",
     danhmuc_id: 4,
     luotxem: 76,
+    luotmua: 7,
+    trangthai: "Còn hàng",
   },
   {
     id: 12,
@@ -136,9 +169,12 @@ export const products: Product[] = [
     giagoc: 22000000,
     giaban: 19900000,
     soluongton: 20,
-    hinhanh: "https://images.unsplash.com/photo-1581591524425-c7e0978865fc?w=600",
+    hinhanh:
+      "https://images.unsplash.com/photo-1581591524425-c7e0978865fc?w=600",
     danhmuc_id: 2,
     luotxem: 334,
+    luotmua: 18,
+    trangthai: "Còn hàng",
   },
 ];
 
@@ -169,7 +205,8 @@ export const newsList: News[] = [
     tieude: "Canon ra mắt EOS R5 Mark II – Quay 8K RAW",
     noidung:
       "Canon vừa chính thức giới thiệu EOS R5 Mark II với cảm biến stacked mới, khả năng quay 8K RAW 60fps và hệ thống lấy nét AI tiên tiến.\n\nMáy được kỳ vọng sẽ là đối thủ mạnh của Sony A1 II trong phân khúc chuyên nghiệp.",
-    hinhanh: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800",
+    hinhanh:
+      "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800",
     ngaydang: "2025-09-15",
     luotxem: 1250,
   },
@@ -178,7 +215,8 @@ export const newsList: News[] = [
     tieude: "Hướng dẫn chọn máy ảnh cho người mới bắt đầu 2025",
     noidung:
       "Bạn đang muốn bắt đầu nhiếp ảnh? Bài viết này sẽ giúp bạn chọn được máy phù hợp ngân sách và nhu cầu: từ entry-level mirrorless đến DSLR cơ bản.\n\nCác tiêu chí quan trọng: cảm biến, hệ thống ống kính, khả năng quay video và trọng lượng.",
-    hinhanh: "https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=800",
+    hinhanh:
+      "https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=800",
     ngaydang: "2025-08-20",
     luotxem: 890,
   },
@@ -187,13 +225,13 @@ export const newsList: News[] = [
     tieude: "Sony FE 85mm f/1.4 GM II – Portrait lens mới",
     noidung:
       "Ống kính portrait huyền thoại được nâng cấp. Nhẹ hơn, lấy nét nhanh hơn và bokeh đẹp hơn thế hệ trước.",
-    hinhanh: "https://images.unsplash.com/photo-1617005082133-548c4dd27f35?w=800",
+    hinhanh:
+      "https://images.unsplash.com/photo-1617005082133-548c4dd27f35?w=800",
     ngaydang: "2025-07-10",
     luotxem: 670,
   },
 ];
 
-// In-memory orders (sẽ reset khi restart server - demo)
 export let orders: Order[] = [];
 
 export function addOrder(order: Order) {
