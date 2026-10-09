@@ -1,4 +1,4 @@
-import import './globals.css'; // Hoặc import '@/app/globals.css';type { Metadata } from "next";
+import '@/app/globals.css';type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
