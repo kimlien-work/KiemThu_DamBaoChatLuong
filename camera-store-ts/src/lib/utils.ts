@@ -8,7 +8,7 @@ export function imageUrl(path: string | null | undefined): string {
   }
 
   // Bỏ ../ nếu có, đảm bảo bắt đầu bằng /
-  let clean = path.replace(/^\.\.\//, "").replace(/^\/+/, "");
+  const clean = path.replace(/^\.\.\//, "").replace(/^\/+/, "");
   // Encode từng phần (xử lý khoảng trắng, dấu ngoặc)
   const encoded = clean
     .split("/")

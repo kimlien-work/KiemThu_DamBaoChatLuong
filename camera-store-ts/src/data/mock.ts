@@ -232,7 +232,7 @@ export const newsList: News[] = [
   },
 ];
 
-export let orders: Order[] = [];
+export const orders: Order[] = [];
 
 export function addOrder(order: Order) {
   orders.push(order);
