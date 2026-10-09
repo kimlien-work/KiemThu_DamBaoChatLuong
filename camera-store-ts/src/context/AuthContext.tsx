@@ -1,21 +1,36 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { Customer } from "@/types";
-import { customers } from "@/data/mock";
+
+export interface AuthUser {
+  id: number;
+  ten: string;
+  tendangnhap: string | null;
+  email: string | null;
+  dien_thoai: string;
+  dia_chi: string | null;
+  trangthai: number;
+}
 
 interface AuthContextType {
-  user: Customer | null;
-  login: (username: string, password: string) => boolean;
-  register: (data: Omit<Customer, "id">) => boolean;
+  user: AuthUser | null;
+  login: (username: string, password: string) => Promise<boolean>;
+  register: (data: {
+    ten: string;
+    tendangnhap: string;
+    matkhau: string;
+    email?: string;
+    dien_thoai: string;
+    diachi?: string;
+  }) => Promise<string | null>;
   logout: () => void;
-  updateProfile: (data: Partial<Customer>) => void;
+  updateProfile: (data: Partial<AuthUser>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<Customer | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
@@ -35,53 +50,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [user, loaded]);
 
-  const login = (username: string, password: string) => {
-    const found = customers.find(
-      (c) => c.tendangnhap === username && c.matkhau === password
-    );
-    if (found) {
-      setUser(found);
-      return true;
-    }
-    // Also check local registered users
-    const localUsers = JSON.parse(localStorage.getItem("localUsers") || "[]") as Customer[];
-    const local = localUsers.find(
-      (c) => c.tendangnhap === username && c.matkhau === password
-    );
-    if (local) {
-      setUser(local);
-      return true;
-    }
-    return false;
+  const login = async (username: string, password: string) => {
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password }),
+    });
+    if (!res.ok) return false;
+    const data = await res.json();
+    setUser(data.user);
+    return true;
   };
 
-  const register = (data: Omit<Customer, "id">) => {
-    const all = [
-      ...customers,
-      ...(JSON.parse(localStorage.getItem("localUsers") || "[]") as Customer[]),
-    ];
-    if (all.some((c) => c.tendangnhap === data.tendangnhap)) return false;
-    const newUser: Customer = { ...data, id: Date.now() };
-    const localUsers = JSON.parse(localStorage.getItem("localUsers") || "[]") as Customer[];
-    localUsers.push(newUser);
-    localStorage.setItem("localUsers", JSON.stringify(localUsers));
-    setUser(newUser);
-    return true;
+  const register = async (data: {
+    ten: string;
+    tendangnhap: string;
+    matkhau: string;
+    email?: string;
+    dien_thoai: string;
+    diachi?: string;
+  }) => {
+    const res = await fetch("/api/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    const json = await res.json();
+    if (!res.ok) return json.error || "Đăng ký thất bại";
+    setUser(json.user);
+    return null;
   };
 
   const logout = () => setUser(null);
 
-  const updateProfile = (data: Partial<Customer>) => {
+  const updateProfile = (data: Partial<AuthUser>) => {
     if (!user) return;
-    const updated = { ...user, ...data };
-    setUser(updated);
-    // update localUsers if needed
-    const localUsers = JSON.parse(localStorage.getItem("localUsers") || "[]") as Customer[];
-    const idx = localUsers.findIndex((c) => c.id === user.id);
-    if (idx >= 0) {
-      localUsers[idx] = updated;
-      localStorage.setItem("localUsers", JSON.stringify(localUsers));
-    }
+    setUser({ ...user, ...data });
   };
 
   return (

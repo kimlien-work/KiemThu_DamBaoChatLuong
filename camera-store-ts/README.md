@@ -1,83 +1,63 @@
-# Camera Store – Next.js + TypeScript
+# Camera Store – Next.js + TypeScript + MySQL
 
-Chuyển đổi từ đồ án PHP thuần (MVC) sang **Next.js 16 + TypeScript + Tailwind CSS**.
+Chuyển từ đồ án PHP sang Next.js, **dùng chung database MySQL** `camera_shop`.
 
-Folder gốc PHP: `DOAN_WPHP` (không bị sửa).
+## 1. Chuẩn bị Database (XAMPP / WAMP)
 
-## Tính năng đã chuyển
+1. Bật **Apache + MySQL** trong XAMPP.
+2. Mở phpMyAdmin → Import file:
+   ```
+   database/camera_shop.sql
+   ```
+3. Đảm bảo database tên `camera_shop` đã có dữ liệu.
 
-| PHP (cũ)              | Next.js (mới)                          |
-|-----------------------|----------------------------------------|
-| Session giỏ hàng      | localStorage + CartContext             |
-| Session đăng nhập     | localStorage + AuthContext             |
-| MySQL Model           | Mock data TypeScript (`src/data/mock.ts`) |
-| index.php?action=...  | App Router (`/product/[id]`, ...)      |
-| Bootstrap 5           | Tailwind CSS                           |
+## 2. Cấu hình kết nối
 
-## Chạy local
+File `.env` (đã có sẵn, sửa nếu cần):
 
-```bash
-cd camera-store-ts
+```
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=
+DB_NAME=camera_shop
+```
+
+## 3. Chạy project
+
+PowerShell (Windows):
+
+```powershell
+cd "đường-dẫn\camera-store-ts"
+Remove-Item -Recurse -Force node_modules, .next -ErrorAction SilentlyContinue
+Remove-Item -Force package-lock.json -ErrorAction SilentlyContinue
 npm install
 npm run dev
 ```
 
 Mở http://localhost:3000
 
-**Tài khoản demo:** `user1` / `123456`
+## 4. Ảnh sản phẩm
 
-## Deploy lên Vercel
-
-### Cách 1: Qua GitHub (khuyên dùng)
-
-1. Tạo repo GitHub mới (ví dụ `camera-store-ts`).
-2. Đẩy code lên:
-
-```bash
-cd camera-store-ts
-git init
-git add .
-git commit -m "Initial: Camera Store Next.js TypeScript"
-git branch -M main
-git remote add origin https://github.com/<username>/camera-store-ts.git
-git push -u origin main
-```
-
-3. Vào [vercel.com](https://vercel.com) → **Add New Project** → Import repo vừa tạo.
-4. Framework Preset: **Next.js** (tự nhận).
-5. Click **Deploy**. Xong trong khoảng 1 phút.
-
-### Cách 2: Vercel CLI
-
-```bash
-npm i -g vercel
-cd camera-store-ts
-vercel
-```
-
-Làm theo hướng dẫn đăng nhập và deploy.
-
-### Lưu ý
-
-- Hiện tại dùng **mock data + localStorage** (không cần database).
-- Muốn dùng database thật (MySQL/Postgres): thêm Prisma + Neon/PlanetScale và sửa `src/data`.
-- Ảnh đang lấy từ Unsplash. Có thể thay bằng ảnh local trong `public/`.
-
-## Cấu trúc thư mục chính
+Copy thư mục ảnh từ đồ án PHP:
 
 ```
-src/
-├── app/                 # App Router pages
-│   ├── page.tsx         # Trang chủ
-│   ├── product/[id]/   # Chi tiết SP
-│   ├── category/[id]/  # Danh mục + sort
-│   ├── cart/            # Giỏ hàng
-│   ├── checkout/        # Thanh toán COD
-│   ├── login/ register/
-│   ├── profile/ orders/
-│   └── news/
-├── components/          # Header, Footer, ProductCard
-├── context/             # CartContext, AuthContext
-├── data/mock.ts         # Dữ liệu mẫu
-└── types/               # TypeScript interfaces
+DOAN_WPHP/images/products  →  camera-store-ts/public/images/products
 ```
+
+## Cấu trúc DB dùng chung với PHP
+
+| Bảng PHP     | Dùng trong Next.js      |
+|--------------|-------------------------|
+| danhmuc      | Danh mục (Canon, Sony…) |
+| mathang      | Sản phẩm                |
+| khach_hang   | Khách hàng              |
+| donhang      | Đơn hàng                |
+| donhangct    | Chi tiết đơn            |
+| tin_tuc      | Tin tức                 |
+
+## Deploy Vercel
+
+Vercel **không kết nối được localhost MySQL**. Cần:
+- Đưa MySQL lên cloud (PlanetScale, Railway, Aiven…)
+- Đổi `DB_HOST` trong Environment Variables trên Vercel

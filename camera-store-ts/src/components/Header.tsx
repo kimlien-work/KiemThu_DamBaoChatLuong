@@ -3,13 +3,23 @@
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
-import { categories } from "@/data/mock";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import type { Category } from "@/types";
 
 export default function Header() {
   const { totalItems } = useCart();
   const { user, logout } = useAuth();
   const [open, setOpen] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  useEffect(() => {
+    fetch("/api/categories")
+      .then((r) => r.json())
+      .then((d) => {
+        if (Array.isArray(d)) setCategories(d);
+      })
+      .catch(() => {});
+  }, []);
 
   return (
     <header className="bg-white shadow-sm sticky top-0 z-50 border-b border-cyan-100">
@@ -27,7 +37,7 @@ export default function Header() {
               <button className="text-gray-700 hover:text-cyan-600 font-medium flex items-center gap-1">
                 Danh mục ▾
               </button>
-              <div className="absolute left-0 top-full mt-1 w-48 bg-white shadow-lg rounded-lg border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
+              <div className="absolute left-0 top-full mt-1 w-48 bg-white shadow-lg rounded-lg border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
                 {categories.map((c) => (
                   <Link
                     key={c.id}
@@ -59,7 +69,7 @@ export default function Header() {
                 <button className="text-sm font-medium text-cyan-700 hover:text-cyan-900">
                   {user.ten} ▾
                 </button>
-                <div className="absolute right-0 top-full mt-1 w-44 bg-white shadow-lg rounded-lg border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
+                <div className="absolute right-0 top-full mt-1 w-44 bg-white shadow-lg rounded-lg border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
                   <Link href="/profile" className="block px-4 py-2 text-sm hover:bg-cyan-50">
                     Hồ sơ
                   </Link>

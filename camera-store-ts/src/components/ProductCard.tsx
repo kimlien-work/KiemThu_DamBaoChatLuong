@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { Product } from "@/types";
+import { imageUrl } from "@/lib/utils";
 
 function formatPrice(n: number) {
-  return n.toLocaleString("vi-VN") + "đ";
+  return Number(n).toLocaleString("vi-VN") + "đ";
 }
 
 export default function ProductCard({ product }: { product: Product }) {
   const hethang = product.soluongton <= 0;
-  const giamgia = product.giaban !== product.giagoc;
+  const giamgia = Number(product.giaban) !== Number(product.giagoc);
 
   return (
     <div
@@ -28,7 +29,7 @@ export default function ProductCard({ product }: { product: Product }) {
         )}
         <Link href={`/product/${product.id}`}>
           <img
-            src={product.hinhanh}
+            src={imageUrl(product.hinhanh)}
             alt={product.tenmathang}
             className={`w-full h-48 object-contain p-3 ${hethang ? "grayscale opacity-60" : ""}`}
           />

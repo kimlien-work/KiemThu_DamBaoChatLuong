@@ -1,28 +1,44 @@
 "use client";
 
 import { useCart } from "@/context/CartContext";
-import { products } from "@/data/mock";
-import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-
-function formatPrice(n: number) {
-  return n.toLocaleString("vi-VN") + "đ";
-}
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import type { Product } from "@/types";
+import { imageUrl, formatPrice } from "@/lib/utils";
 
 export default function CartPage() {
   const { cart, updateQuantity, removeFromCart, clearCart } = useCart();
   const { user } = useAuth();
   const router = useRouter();
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (cart.length === 0) {
+      setProducts([]);
+      setLoading(false);
+      return;
+    }
+    const ids = cart.map((c) => c.id).join(",");
+    fetch(`/api/products?ids=${ids}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (Array.isArray(d)) setProducts(d);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, [cart]);
 
   const items = cart
     .map((c) => {
       const p = products.find((x) => x.id === c.id);
       return p ? { ...p, soluong: c.soluong } : null;
     })
-    .filter(Boolean) as (typeof products[0] & { soluong: number })[];
+    .filter(Boolean) as (Product & { soluong: number })[];
 
-  const tongtien = items.reduce((s, i) => s + i.giaban * i.soluong, 0);
+  const tongtien = items.reduce((s, i) => s + Number(i.giaban) * i.soluong, 0);
 
   const handleCheckout = () => {
     if (!user) {
@@ -32,6 +48,8 @@ export default function CartPage() {
     }
     router.push("/checkout");
   };
+
+  if (loading) return <p className="text-center py-12">Đang tải giỏ hàng...</p>;
 
   if (items.length === 0) {
     return (
@@ -64,7 +82,7 @@ export default function CartPage() {
             {items.map((item) => (
               <tr key={item.id} className="border-t">
                 <td className="p-3">
-                  <img src={item.hinhanh} alt="" className="w-14 h-14 object-contain" />
+                  <img src={imageUrl(item.hinhanh)} alt="" className="w-14 h-14 object-contain" />
                 </td>
                 <td className="p-3">
                   <Link href={`/product/${item.id}`} className="font-medium hover:text-cyan-600">
@@ -83,13 +101,10 @@ export default function CartPage() {
                   />
                 </td>
                 <td className="p-3 text-center text-red-600 font-bold">
-                  {formatPrice(item.giaban * item.soluong)}
+                  {formatPrice(Number(item.giaban) * item.soluong)}
                 </td>
                 <td className="p-3 text-center">
-                  <button
-                    onClick={() => removeFromCart(item.id)}
-                    className="text-red-500 hover:text-red-700 text-lg"
-                  >
+                  <button onClick={() => removeFromCart(item.id)} className="text-red-500 hover:text-red-700 text-lg">
                     🗑
                   </button>
                 </td>
@@ -98,37 +113,17 @@ export default function CartPage() {
           </tbody>
           <tfoot className="bg-gray-50">
             <tr>
-              <td colSpan={4} className="p-3 text-right font-bold">
-                Tổng cộng:
-              </td>
-              <td className="p-3 text-center text-red-600 font-bold text-lg">
-                {formatPrice(tongtien)}
-              </td>
+              <td colSpan={4} className="p-3 text-right font-bold">Tổng cộng:</td>
+              <td className="p-3 text-center text-red-600 font-bold text-lg">{formatPrice(tongtien)}</td>
               <td></td>
             </tr>
           </tfoot>
         </table>
       </div>
-
       <div className="flex flex-wrap gap-3 mt-6 justify-end">
-        <button
-          onClick={clearCart}
-          className="px-5 py-2 border border-gray-300 rounded hover:bg-gray-100"
-        >
-          Xóa giỏ hàng
-        </button>
-        <Link
-          href="/"
-          className="px-5 py-2 border border-cyan-500 text-cyan-600 rounded hover:bg-cyan-50"
-        >
-          Tiếp tục mua
-        </Link>
-        <button
-          onClick={handleCheckout}
-          className="px-6 py-2 bg-red-500 text-white rounded font-bold hover:bg-red-600"
-        >
-          Thanh toán
-        </button>
+        <button onClick={clearCart} className="px-5 py-2 border border-gray-300 rounded hover:bg-gray-100">Xóa giỏ hàng</button>
+        <Link href="/" className="px-5 py-2 border border-cyan-500 text-cyan-600 rounded hover:bg-cyan-50">Tiếp tục mua</Link>
+        <button onClick={handleCheckout} className="px-6 py-2 bg-red-500 text-white rounded font-bold hover:bg-red-600">Thanh toán</button>
       </div>
     </div>
   );

@@ -6,55 +6,70 @@ export interface Category {
 export interface Product {
   id: number;
   tenmathang: string;
-  mota: string;
+  mota: string | null;
   giagoc: number;
   giaban: number;
   soluongton: number;
-  hinhanh: string;
+  hinhanh: string | null;
   danhmuc_id: number;
   luotxem: number;
+  luotmua: number;
+  trangthai: number;
 }
 
 export interface Customer {
   id: number;
   ten: string;
-  tendangnhap: string;
-  matkhau: string;
-  email: string;
+  tendangnhap: string | null;
+  mat_khau: string;
+  email: string | null;
   dien_thoai: string;
-  diachi: string;
+  dia_chi: string | null;
+  trangthai: number;
 }
 
 export interface News {
   id: number;
   tieude: string;
-  noidung: string;
-  hinhanh: string;
-  ngaydang: string;
+  tomtat: string | null;
+  noidung: string | null;
+  hinhanh: string | null;
+  ngaydang: string | null;
   luotxem: number;
+  trangthai: number;
 }
 
 export interface OrderItem {
+  id?: number;
   mathang_id: number;
   dongia: number;
   soluong: number;
   thanhtien: number;
   tenmathang?: string;
-  hinhanh?: string;
+  hinhanh?: string | null;
 }
 
 export interface Order {
   id: number;
   khach_hang_id: number;
-  ngaydat: string;
+  ngay: string;
   tongtien: number;
-  diachi: string;
-  ghichu: string;
-  trangthai: string;
-  items: OrderItem[];
+  ghichu: string | null;
+  trangthai: number;
+  items?: OrderItem[];
 }
 
 export interface CartItem {
   id: number;
   soluong: number;
+}
+
+export function trangThaiText(status: number): string {
+  const map: Record<number, string> = {
+    0: "Chờ duyệt",
+    1: "Đang giao",
+    2: "Hoàn tất",
+    3: "Đã hủy",
+  };
+  return map[status] ?? "Không rõ";
 }

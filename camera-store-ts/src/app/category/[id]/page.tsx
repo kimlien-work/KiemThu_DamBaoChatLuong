@@ -1,7 +1,9 @@
 import ProductCard from "@/components/ProductCard";
-import { categories, products } from "@/data/mock";
+import { getCategoryById, getProductsByCategory } from "@/lib/queries";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+
+export const dynamic = "force-dynamic";
 
 export default async function CategoryPage({
   params,
@@ -13,43 +15,30 @@ export default async function CategoryPage({
   const { id } = await params;
   const { sort = "default" } = await searchParams;
   const catId = Number(id);
-  const cat = categories.find((c) => c.id === catId);
+  const cat = await getCategoryById(catId);
   if (!cat) notFound();
 
-  let list = products.filter((p) => p.danhmuc_id === catId);
-  if (sort === "price_asc") list = [...list].sort((a, b) => a.giaban - b.giaban);
-  else if (sort === "price_desc") list = [...list].sort((a, b) => b.giaban - a.giaban);
-  else if (sort === "view") list = [...list].sort((a, b) => b.luotxem - a.luotxem);
+  const list = await getProductsByCategory(catId, sort);
 
   return (
     <div>
       <div className="flex flex-wrap justify-between items-center border-b pb-3 mb-6 gap-3">
         <h1 className="text-2xl font-bold text-cyan-700">{cat.tendanhmuc}</h1>
         <div className="flex gap-2 text-sm">
-          <Link
-            href={`/category/${id}`}
-            className={`px-3 py-1 rounded ${sort === "default" ? "bg-cyan-600 text-white" : "bg-gray-100"}`}
-          >
-            Mặc định
-          </Link>
-          <Link
-            href={`/category/${id}?sort=price_asc`}
-            className={`px-3 py-1 rounded ${sort === "price_asc" ? "bg-cyan-600 text-white" : "bg-gray-100"}`}
-          >
-            Giá ↑
-          </Link>
-          <Link
-            href={`/category/${id}?sort=price_desc`}
-            className={`px-3 py-1 rounded ${sort === "price_desc" ? "bg-cyan-600 text-white" : "bg-gray-100"}`}
-          >
-            Giá ↓
-          </Link>
-          <Link
-            href={`/category/${id}?sort=view`}
-            className={`px-3 py-1 rounded ${sort === "view" ? "bg-cyan-600 text-white" : "bg-gray-100"}`}
-          >
-            Xem nhiều
-          </Link>
+          {[
+            ["default", "Mặc định"],
+            ["price_asc", "Giá ↑"],
+            ["price_desc", "Giá ↓"],
+            ["view", "Xem nhiều"],
+          ].map(([s, label]) => (
+            <Link
+              key={s}
+              href={`/category/${id}?sort=${s}`}
+              className={`px-3 py-1 rounded ${sort === s ? "bg-cyan-600 text-white" : "bg-gray-100"}`}
+            >
+              {label}
+            </Link>
+          ))}
         </div>
       </div>
 

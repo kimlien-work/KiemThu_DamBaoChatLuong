@@ -1,33 +1,43 @@
 "use client";
 
-import { products } from "@/data/mock";
 import { useCart } from "@/context/CartContext";
 import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import ProductCard from "@/components/ProductCard";
+import type { Product } from "@/types";
+import { imageUrl } from "@/lib/utils";
 
 function formatPrice(n: number) {
-  return n.toLocaleString("vi-VN") + "đ";
+  return Number(n).toLocaleString("vi-VN") + "đ";
 }
 
 export default function ProductDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { addToCart } = useCart();
-  const id = Number(params.id);
-  const product = products.find((p) => p.id === id);
+  const [product, setProduct] = useState<Product | null>(null);
+  const [related, setRelated] = useState<Product[]>([]);
   const [qty, setQty] = useState(1);
+  const [loading, setLoading] = useState(true);
 
-  if (!product) {
-    return <p className="text-center py-12">Không tìm thấy sản phẩm.</p>;
-  }
+  useEffect(() => {
+    fetch(`/api/products/${params.id}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.product) {
+          setProduct(d.product);
+          setRelated(d.related || []);
+        }
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, [params.id]);
 
-  const related = products
-    .filter((p) => p.danhmuc_id === product.danhmuc_id && p.id !== product.id)
-    .slice(0, 4);
+  if (loading) return <p className="text-center py-12">Đang tải...</p>;
+  if (!product) return <p className="text-center py-12">Không tìm thấy sản phẩm.</p>;
+
   const hethang = product.soluongton <= 0;
-  const giamgia = product.giaban !== product.giagoc;
+  const giamgia = Number(product.giaban) !== Number(product.giagoc);
 
   const handleAdd = () => {
     if (hethang) return;
@@ -48,7 +58,7 @@ export default function ProductDetailPage() {
           <h1 className="text-2xl font-bold text-cyan-700 mb-4">{product.tenmathang}</h1>
           <div className="bg-white rounded-lg border p-6 mb-6 text-center">
             <img
-              src={product.hinhanh}
+              src={imageUrl(product.hinhanh)}
               alt={product.tenmathang}
               className={`max-h-96 mx-auto object-contain ${hethang ? "grayscale opacity-60" : ""}`}
             />
@@ -102,10 +112,11 @@ export default function ProductDetailPage() {
           )}
 
           <div>
-            <h2 className="text-lg font-bold text-cyan-700 border-b pb-2 mb-3">
-              Mô tả sản phẩm
-            </h2>
-            <div className="text-gray-700 whitespace-pre-line">{product.mota}</div>
+            <h2 className="text-lg font-bold text-cyan-700 border-b pb-2 mb-3">Mô tả sản phẩm</h2>
+            <div
+              className="text-gray-700 prose max-w-none"
+              dangerouslySetInnerHTML={{ __html: product.mota || "" }}
+            />
           </div>
         </div>
 
@@ -118,7 +129,7 @@ export default function ProductDetailPage() {
                 href={`/product/${p.id}`}
                 className="flex gap-3 bg-white border rounded p-2 hover:shadow"
               >
-                <img src={p.hinhanh} alt="" className="w-16 h-16 object-contain" />
+                <img src={imageUrl(p.hinhanh)} alt="" className="w-16 h-16 object-contain" />
                 <div>
                   <p className="text-sm font-medium line-clamp-2">{p.tenmathang}</p>
                   <p className="text-red-600 text-sm font-bold">{formatPrice(p.giaban)}</p>

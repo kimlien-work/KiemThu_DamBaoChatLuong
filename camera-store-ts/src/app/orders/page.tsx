@@ -4,11 +4,9 @@ import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Order } from "@/types";
-
-function formatPrice(n: number) {
-  return n.toLocaleString("vi-VN") + "đ";
-}
+import type { Order } from "@/types";
+import { formatPrice } from "@/lib/utils";
+import { trangThaiText } from "@/types";
 
 export default function OrdersPage() {
   const { user } = useAuth();
@@ -16,12 +14,10 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
 
   useEffect(() => {
-    if (!user) {
-      router.push("/login");
-      return;
-    }
-    const all = JSON.parse(localStorage.getItem("orders") || "[]") as Order[];
-    setOrders(all.filter((o) => o.khach_hang_id === user.id).reverse());
+    if (!user) { router.push("/login"); return; }
+    fetch(`/api/orders?customerId=${user.id}`)
+      .then((r) => r.json())
+      .then((d) => { if (Array.isArray(d)) setOrders(d); });
   }, [user, router]);
 
   if (!user) return null;
@@ -37,21 +33,11 @@ export default function OrdersPage() {
             <div key={o.id} className="bg-white border rounded-lg p-4 shadow-sm">
               <div className="flex flex-wrap justify-between gap-2 mb-2">
                 <span className="font-medium">#{o.id}</span>
-                <span className="text-sm text-gray-500">
-                  {new Date(o.ngaydat).toLocaleString("vi-VN")}
-                </span>
-                <span className="text-sm bg-amber-100 text-amber-800 px-2 py-0.5 rounded">
-                  {o.trangthai}
-                </span>
+                <span className="text-sm text-gray-500">{new Date(o.ngay).toLocaleString("vi-VN")}</span>
+                <span className="text-sm bg-amber-100 text-amber-800 px-2 py-0.5 rounded">{trangThaiText(o.trangthai)}</span>
               </div>
-              <p className="text-sm text-gray-600 mb-1">Địa chỉ: {o.diachi}</p>
               <p className="font-bold text-red-600 mb-2">{formatPrice(o.tongtien)}</p>
-              <Link
-                href={`/orders/${o.id}`}
-                className="text-sm text-cyan-600 hover:underline"
-              >
-                Xem chi tiết →
-              </Link>
+              <Link href={`/orders/${o.id}`} className="text-sm text-cyan-600 hover:underline">Xem chi tiết →</Link>
             </div>
           ))}
         </div>
