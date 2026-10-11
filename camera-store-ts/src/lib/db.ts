@@ -4,6 +4,12 @@ const globalForDb = globalThis as unknown as { pool: mysql.Pool | undefined };
 
 export function getPool() {
   if (!globalForDb.pool) {
+    const useSsl =
+      process.env.DB_SSL === "true" ||
+      process.env.DB_SSL === "1" ||
+      (process.env.DB_HOST || "").includes("aivencloud.com") ||
+      (process.env.DB_HOST || "").includes("aiven.io");
+
     globalForDb.pool = mysql.createPool({
       host: process.env.DB_HOST || "localhost",
       port: Number(process.env.DB_PORT || 3306),
@@ -11,8 +17,11 @@ export function getPool() {
       password: process.env.DB_PASSWORD || "",
       database: process.env.DB_NAME || "camera_shop",
       waitForConnections: true,
-      connectionLimit: 10,
+      connectionLimit: 5,
       charset: "utf8mb4",
+      connectTimeout: 15000,
+      // Aiven / cloud MySQL bắt buộc SSL
+      ssl: useSsl ? { rejectUnauthorized: false } : undefined,
     });
   }
   return globalForDb.pool;
