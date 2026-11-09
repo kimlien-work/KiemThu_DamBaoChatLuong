@@ -1,3 +1,7 @@
+-- Aiven-compatible copy of original phpMyAdmin export.
+-- Tables now declare PRIMARY KEY at creation. No DROP statements.
+-- Run ONLY against an empty `defaultdb` database. Do not import twice.
+
 -- phpMyAdmin SQL Dump
 -- version 5.2.3
 -- https://www.phpmyadmin.net/
@@ -28,7 +32,7 @@ SET time_zone = "+00:00";
 --
 
 CREATE TABLE `chuc_vu` (
-  `id` int UNSIGNED NOT NULL,
+  `id` int UNSIGNED NOT NULL PRIMARY KEY,
   `ten` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `he_so` decimal(5,2) DEFAULT 1.00
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -48,7 +52,7 @@ INSERT INTO `chuc_vu` (`id`, `ten`, `he_so`) VALUES
 --
 
 CREATE TABLE `danhmuc` (
-  `id` int UNSIGNED NOT NULL,
+  `id` int UNSIGNED NOT NULL PRIMARY KEY,
   `tendanhmuc` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -71,7 +75,7 @@ INSERT INTO `danhmuc` (`id`, `tendanhmuc`) VALUES
 --
 
 CREATE TABLE `diachi` (
-  `id` int UNSIGNED NOT NULL,
+  `id` int UNSIGNED NOT NULL PRIMARY KEY,
   `khach_hang_id` int UNSIGNED NOT NULL,
   `diachi` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `macdinh` tinyint UNSIGNED NOT NULL DEFAULT '1'
@@ -95,7 +99,7 @@ INSERT INTO `diachi` (`id`, `khach_hang_id`, `diachi`, `macdinh`) VALUES
 --
 
 CREATE TABLE `donhang` (
-  `id` int UNSIGNED NOT NULL,
+  `id` int UNSIGNED NOT NULL PRIMARY KEY,
   `khach_hang_id` int UNSIGNED NOT NULL,
   `diachi_id` int UNSIGNED DEFAULT NULL,
   `ngay` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -118,14 +122,6 @@ INSERT INTO `donhang` (`id`, `khach_hang_id`, `diachi_id`, `ngay`, `tongtien`, `
 --
 -- Triggers `donhang`
 --
-DELIMITER $$
-CREATE TRIGGER `trg_tang_diem_tich_luy` AFTER INSERT ON `donhang` FOR EACH ROW BEGIN
-    UPDATE `khach_hang`
-    SET `diem_tich_luy` = `diem_tich_luy` + (NEW.tongtien / 10000)
-    WHERE `id` = NEW.khach_hang_id;
-END
-$$
-DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -134,7 +130,7 @@ DELIMITER ;
 --
 
 CREATE TABLE `donhangct` (
-  `id` int UNSIGNED NOT NULL,
+  `id` int UNSIGNED NOT NULL PRIMARY KEY,
   `donhang_id` int UNSIGNED NOT NULL,
   `mathang_id` int UNSIGNED NOT NULL,
   `dongia` decimal(15,0) NOT NULL,
@@ -158,14 +154,6 @@ INSERT INTO `donhangct` (`id`, `donhang_id`, `mathang_id`, `dongia`, `soluong`, 
 --
 -- Triggers `donhangct`
 --
-DELIMITER $$
-CREATE TRIGGER `trg_tang_luot_mua` AFTER INSERT ON `donhangct` FOR EACH ROW BEGIN
-    UPDATE `mathang`
-    SET `luotmua` = `luotmua` + NEW.soluong
-    WHERE `id` = NEW.mathang_id;
-END
-$$
-DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -174,7 +162,7 @@ DELIMITER ;
 --
 
 CREATE TABLE `khach_hang` (
-  `id` int UNSIGNED NOT NULL,
+  `id` int UNSIGNED NOT NULL PRIMARY KEY,
   `tendangnhap` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `ten` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `dien_thoai` varchar(15) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -205,7 +193,7 @@ INSERT INTO `khach_hang` (`id`, `tendangnhap`, `ten`, `dien_thoai`, `email`, `di
 --
 
 CREATE TABLE `mathang` (
-  `id` int UNSIGNED NOT NULL,
+  `id` int UNSIGNED NOT NULL PRIMARY KEY,
   `tenmathang` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `mota` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `giagoc` decimal(15,0) NOT NULL DEFAULT '0',
@@ -313,7 +301,7 @@ INSERT INTO `mathang` (`id`, `tenmathang`, `mota`, `giagoc`, `giaban`, `soluongt
 --
 
 CREATE TABLE `news` (
-  `id` int UNSIGNED NOT NULL,
+  `id` int UNSIGNED NOT NULL PRIMARY KEY,
   `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `image` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
@@ -330,7 +318,7 @@ CREATE TABLE `news` (
 --
 
 CREATE TABLE `nhan_vien` (
-  `id` int UNSIGNED NOT NULL,
+  `id` int UNSIGNED NOT NULL PRIMARY KEY,
   `tendangnhap` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `ten` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `chucvu_id` int UNSIGNED NOT NULL,
@@ -358,7 +346,7 @@ INSERT INTO `nhan_vien` (`id`, `tendangnhap`, `ten`, `chucvu_id`, `dien_thoai`, 
 --
 
 CREATE TABLE `tin_tuc` (
-  `id` int UNSIGNED NOT NULL,
+  `id` int UNSIGNED NOT NULL PRIMARY KEY,
   `tieude` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `tomtat` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `noidung` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
@@ -391,28 +379,23 @@ INSERT INTO `tin_tuc` (`id`, `tieude`, `tomtat`, `noidung`, `hinhanh`, `ngaydang
 --
 -- Indexes for table `chuc_vu`
 --
-ALTER TABLE `chuc_vu`
-  ADD PRIMARY KEY (`id`);
 
 --
 -- Indexes for table `danhmuc`
 --
 ALTER TABLE `danhmuc`
-  ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `uk_tendanhmuc` (`tendanhmuc`);
 
 --
 -- Indexes for table `diachi`
 --
 ALTER TABLE `diachi`
-  ADD PRIMARY KEY (`id`),
   ADD KEY `idx_khachhang` (`khach_hang_id`);
 
 --
 -- Indexes for table `donhang`
 --
 ALTER TABLE `donhang`
-  ADD PRIMARY KEY (`id`),
   ADD KEY `idx_khachhang` (`khach_hang_id`),
   ADD KEY `idx_ngay` (`ngay`),
   ADD KEY `fk_donhang_diachi` (`diachi_id`);
@@ -421,7 +404,6 @@ ALTER TABLE `donhang`
 -- Indexes for table `donhangct`
 --
 ALTER TABLE `donhangct`
-  ADD PRIMARY KEY (`id`),
   ADD KEY `idx_donhang` (`donhang_id`),
   ADD KEY `idx_mathang` (`mathang_id`);
 
@@ -429,7 +411,6 @@ ALTER TABLE `donhangct`
 -- Indexes for table `khach_hang`
 --
 ALTER TABLE `khach_hang`
-  ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `uk_kh_dienthoai` (`dien_thoai`),
   ADD UNIQUE KEY `uk_kh_email` (`email`),
   ADD UNIQUE KEY `uk_kh_tendangnhap` (`tendangnhap`);
@@ -438,7 +419,6 @@ ALTER TABLE `khach_hang`
 -- Indexes for table `mathang`
 --
 ALTER TABLE `mathang`
-  ADD PRIMARY KEY (`id`),
   ADD KEY `idx_danhmuc` (`danhmuc_id`),
   ADD KEY `idx_giaban` (`giaban`),
   ADD KEY `idx_luotmua` (`luotmua`),
@@ -449,14 +429,11 @@ ALTER TABLE `mathang` ADD FULLTEXT KEY `ft_search` (`tenmathang`,`mota`);
 --
 -- Indexes for table `news`
 --
-ALTER TABLE `news`
-  ADD PRIMARY KEY (`id`);
 
 --
 -- Indexes for table `nhan_vien`
 --
 ALTER TABLE `nhan_vien`
-  ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `uk_nv_tendangnhap` (`tendangnhap`),
   ADD UNIQUE KEY `uk_nv_dienthoai` (`dien_thoai`),
   ADD UNIQUE KEY `uk_nv_email` (`email`),
@@ -466,7 +443,6 @@ ALTER TABLE `nhan_vien`
 -- Indexes for table `tin_tuc`
 --
 ALTER TABLE `tin_tuc`
-  ADD PRIMARY KEY (`id`),
   ADD KEY `idx_trangthai` (`trangthai`),
   ADD KEY `idx_ngaydang` (`ngay_dang`),
   ADD KEY `fk_tintuc_nhanvien` (`nhan_vien_id`);
@@ -576,6 +552,25 @@ ALTER TABLE `nhan_vien`
 --
 ALTER TABLE `tin_tuc`
   ADD CONSTRAINT `fk_tintuc_nhanvien` FOREIGN KEY (`nhan_vien_id`) REFERENCES `nhan_vien` (`id`) ON UPDATE CASCADE;
+-- Triggers (created only after tables and sample rows exist)
+DELIMITER $$
+CREATE TRIGGER `trg_tang_diem_tich_luy` AFTER INSERT ON `donhang` FOR EACH ROW BEGIN
+    UPDATE `khach_hang`
+    SET `diem_tich_luy` = `diem_tich_luy` + (NEW.tongtien / 10000)
+    WHERE `id` = NEW.khach_hang_id;
+END
+$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE TRIGGER `trg_tang_luot_mua` AFTER INSERT ON `donhangct` FOR EACH ROW BEGIN
+    UPDATE `mathang`
+    SET `luotmua` = `luotmua` + NEW.soluong
+    WHERE `id` = NEW.mathang_id;
+END
+$$
+DELIMITER ;
+
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
