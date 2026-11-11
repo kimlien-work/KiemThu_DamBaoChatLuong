@@ -5,7 +5,8 @@ export default function Footer() {
         <div>
           <h3 className="text-white font-bold text-lg mb-3">📷 Camera Store</h3>
           <p className="text-sm">
-            Chuyên cung cấp máy ảnh chính hãng, ống kính và phụ kiện nhiếp ảnh với giá tốt nhất.
+            Chuyên cung cấp máy ảnh chính hãng, ống kính và phụ kiện nhiếp ảnh
+            với giá tốt nhất.
           </p>
         </div>
         <div>
@@ -21,7 +22,7 @@ export default function Footer() {
         </div>
       </div>
       <div className="border-t border-gray-700 text-center py-4 text-sm">
-        © 2025 Camera Store. Đồ án chuyển đổi từ PHP sang Next.js + TypeScript.
+        © 2025 Camera Store
       </div>
     </footer>
   );
