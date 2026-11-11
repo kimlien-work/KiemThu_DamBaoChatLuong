@@ -4,22 +4,27 @@ import Link from "next/link";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import type { Category } from "@/types";
 
 export default function Header() {
+  const pathname = usePathname();
   const { totalItems } = useCart();
   const { user, logout } = useAuth();
   const [open, setOpen] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
 
   useEffect(() => {
+    if (pathname.startsWith("/admin")) return;
     fetch("/api/categories")
       .then((r) => r.json())
       .then((d) => {
         if (Array.isArray(d)) setCategories(d);
       })
       .catch(() => {});
-  }, []);
+  }, [pathname]);
+
+  if (pathname.startsWith("/admin")) return null;
 
   return (
     <header className="bg-white shadow-sm sticky top-0 z-50 border-b border-cyan-100">

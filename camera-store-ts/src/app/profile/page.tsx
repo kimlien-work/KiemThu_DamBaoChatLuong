@@ -5,10 +5,15 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 
 export default function ProfilePage() {
-  const { user, updateProfile } = useAuth();
+  const { user, updateProfile, changePassword } = useAuth();
   const router = useRouter();
   const [form, setForm] = useState({ ten: "", email: "", dien_thoai: "", dia_chi: "" });
   const [msg, setMsg] = useState("");
+  const [passwordForm, setPasswordForm] = useState({ current: "", next: "", confirm: "" });
+  const [showPasswords, setShowPasswords] = useState(false);
+  const [passwordMsg, setPasswordMsg] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [changingPassword, setChangingPassword] = useState(false);
 
   useEffect(() => {
     if (!user) { router.push("/login"); return; }
@@ -27,6 +32,32 @@ export default function ProfilePage() {
     updateProfile(form);
     setMsg("Cập nhật thành công!");
   };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordMsg("");
+    setPasswordError("");
+    if (passwordForm.next !== passwordForm.confirm) {
+      setPasswordError("Mật khẩu xác nhận không khớp");
+      return;
+    }
+
+    setChangingPassword(true);
+    const error = await changePassword(passwordForm.current, passwordForm.next);
+    setChangingPassword(false);
+    if (error) {
+      setPasswordError(error);
+      return;
+    }
+    setPasswordForm({ current: "", next: "", confirm: "" });
+    setPasswordMsg("Đổi mật khẩu thành công!");
+  };
+
+  const passwordFields = [
+    ["current", "Mật khẩu hiện tại"],
+    ["next", "Mật khẩu mới"],
+    ["confirm", "Xác nhận mật khẩu mới"],
+  ] as const;
 
   return (
     <div className="max-w-md mx-auto">
@@ -56,6 +87,34 @@ export default function ProfilePage() {
         ))}
         <button type="submit" className="w-full bg-cyan-600 text-white py-2.5 rounded font-medium hover:bg-cyan-700">
           Lưu thay đổi
+        </button>
+      </form>
+
+      <h2 className="text-xl font-bold text-cyan-700 mt-8 mb-4">Đổi mật khẩu</h2>
+      <form onSubmit={handleChangePassword} className="bg-white border rounded-lg p-6 shadow-sm space-y-4">
+        {passwordMsg && <div className="bg-green-50 text-green-700 text-sm p-3 rounded">{passwordMsg}</div>}
+        {passwordError && <div className="bg-red-50 text-red-600 text-sm p-3 rounded">{passwordError}</div>}
+        {passwordFields.map(([key, label]) => (
+          <div key={key}>
+            <label className="block text-sm font-medium mb-1">{label}</label>
+            <div className="flex">
+              <input
+                type={showPasswords ? "text" : "password"}
+                value={passwordForm[key]}
+                onChange={(e) => setPasswordForm({ ...passwordForm, [key]: e.target.value })}
+                className="min-w-0 flex-1 border rounded-l px-3 py-2"
+                required
+              />
+              {key === "current" && (
+                <button type="button" onClick={() => setShowPasswords(!showPasswords)} className="border border-l-0 rounded-r px-3 text-sm text-cyan-700 hover:bg-gray-50" aria-label={showPasswords ? "Ẩn mật khẩu" : "Hiện mật khẩu"}>
+                  {showPasswords ? "Ẩn" : "Hiện"}
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+        <button type="submit" disabled={changingPassword} className="w-full bg-cyan-600 text-white py-2.5 rounded font-medium hover:bg-cyan-700 disabled:opacity-50">
+          {changingPassword ? "Đang đổi mật khẩu..." : "Đổi mật khẩu"}
         </button>
       </form>
     </div>

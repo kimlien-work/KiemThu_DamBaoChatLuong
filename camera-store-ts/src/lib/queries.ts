@@ -97,6 +97,19 @@ export async function createCustomer(data: {
   return (result as { insertId: number }).insertId;
 }
 
+export async function changeCustomerPassword(
+  id: number,
+  currentPassword: string,
+  newPassword: string
+): Promise<boolean> {
+  const pool = getPool();
+  const [result] = await pool.execute(
+    "UPDATE khach_hang SET mat_khau = ? WHERE id = ? AND mat_khau = ? AND trangthai = 1",
+    [newPassword, id, currentPassword]
+  );
+  return (result as { affectedRows: number }).affectedRows > 0;
+}
+
 export async function updateCustomer(
   id: number,
   data: Partial<Pick<Customer, "ten" | "email" | "dien_thoai" | "dia_chi">>

@@ -25,6 +25,7 @@ interface AuthContextType {
   }) => Promise<string | null>;
   logout: () => void;
   updateProfile: (data: Partial<AuthUser>) => void;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<string | null>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -88,8 +89,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser({ ...user, ...data });
   };
 
+  const changePassword = async (currentPassword: string, newPassword: string) => {
+    if (!user) return "Vui lòng đăng nhập lại";
+    const res = await fetch("/api/auth/change-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ customerId: user.id, currentPassword, newPassword }),
+    });
+    const json = await res.json();
+    if (!res.ok) return json.error || "Đổi mật khẩu thất bại";
+    return null;
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, updateProfile }}>
+    <AuthContext.Provider value={{ user, login, register, logout, updateProfile, changePassword }}>
       {children}
     </AuthContext.Provider>
   );

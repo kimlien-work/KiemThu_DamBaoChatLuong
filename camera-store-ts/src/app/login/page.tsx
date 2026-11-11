@@ -10,6 +10,7 @@ export default function LoginPage() {
   const router = useRouter();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -34,7 +35,12 @@ export default function LoginPage() {
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">Mật khẩu</label>
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full border rounded px-3 py-2" required />
+          <div className="flex">
+            <input type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} className="min-w-0 flex-1 border rounded-l px-3 py-2" required />
+            <button type="button" onClick={() => setShowPassword(!showPassword)} className="border border-l-0 rounded-r px-3 text-sm text-cyan-700 hover:bg-gray-50" aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}>
+              {showPassword ? "Ẩn" : "Hiện"}
+            </button>
+          </div>
         </div>
         <button type="submit" disabled={loading} className="w-full bg-cyan-600 text-white py-2.5 rounded font-medium hover:bg-cyan-700 disabled:opacity-50">
           {loading ? "Đang đăng nhập..." : "Đăng nhập"}

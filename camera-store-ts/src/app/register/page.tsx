@@ -9,8 +9,9 @@ export default function RegisterPage() {
   const { register } = useAuth();
   const router = useRouter();
   const [form, setForm] = useState({
-    ten: "", tendangnhap: "", matkhau: "", email: "", dien_thoai: "", diachi: "",
+    ten: "", tendangnhap: "", matkhau: "", xacnhanmatkhau: "", email: "", dien_thoai: "", diachi: "",
   });
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -18,7 +19,19 @@ export default function RegisterPage() {
     e.preventDefault();
     setLoading(true);
     setError("");
-    const err = await register(form);
+    if (form.matkhau !== form.xacnhanmatkhau) {
+      setLoading(false);
+      setError("Mật khẩu xác nhận không khớp");
+      return;
+    }
+    const err = await register({
+      ten: form.ten,
+      tendangnhap: form.tendangnhap,
+      matkhau: form.matkhau,
+      email: form.email,
+      dien_thoai: form.dien_thoai,
+      diachi: form.diachi,
+    });
     setLoading(false);
     if (err) setError(err);
     else router.push("/");
@@ -33,19 +46,27 @@ export default function RegisterPage() {
           ["ten", "Họ tên"],
           ["tendangnhap", "Tên đăng nhập"],
           ["matkhau", "Mật khẩu"],
+          ["xacnhanmatkhau", "Xác nhận mật khẩu"],
           ["email", "Email"],
           ["dien_thoai", "Điện thoại"],
           ["diachi", "Địa chỉ"],
         ] as const).map(([key, label]) => (
           <div key={key}>
             <label className="block text-sm font-medium mb-1">{label}</label>
-            <input
-              type={key === "matkhau" ? "password" : key === "email" ? "email" : "text"}
-              value={form[key]}
-              onChange={(e) => setForm({ ...form, [key]: e.target.value })}
-              className="w-full border rounded px-3 py-2"
-              required={key !== "email"}
-            />
+            <div className={key === "matkhau" || key === "xacnhanmatkhau" ? "flex" : undefined}>
+              <input
+                type={key === "matkhau" || key === "xacnhanmatkhau" ? (showPassword ? "text" : "password") : key === "email" ? "email" : "text"}
+                value={form[key]}
+                onChange={(e) => setForm({ ...form, [key]: e.target.value })}
+                className={`w-full border px-3 py-2 ${key === "matkhau" || key === "xacnhanmatkhau" ? "min-w-0 flex-1 rounded-l" : "rounded"} ${key === "matkhau" || key === "xacnhanmatkhau" ? "rounded-r-none" : ""}`}
+                required={key !== "email"}
+              />
+              {(key === "matkhau" || key === "xacnhanmatkhau") && (
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="border border-l-0 rounded-r px-3 text-sm text-cyan-700 hover:bg-gray-50" aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}>
+                  {showPassword ? "Ẩn" : "Hiện"}
+                </button>
+              )}
+            </div>
           </div>
         ))}
         <button type="submit" disabled={loading} className="w-full bg-cyan-600 text-white py-2.5 rounded font-medium hover:bg-cyan-700 disabled:opacity-50">
