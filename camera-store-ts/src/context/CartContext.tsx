@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { CartItem } from "@/types";
+import { useAuth } from "./AuthContext";
 
 interface CartContextType {
   cart: CartItem[];
@@ -15,24 +16,55 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | null>(null);
 
 export function CartProvider({ children }: { children: ReactNode }) {
+  const { user, authLoaded } = useAuth();
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [loaded, setLoaded] = useState(false);
+  const [ownerKey, setOwnerKey] = useState<string | null>(null);
 
   useEffect(() => {
-    const saved = localStorage.getItem("cart");
-    if (saved) {
+    if (!authLoaded) return;
+
+    const nextOwnerKey = user ? `cart:user:${user.id}` : "cart:guest";
+    if (ownerKey === nextOwnerKey) return;
+
+    if (ownerKey) {
+      localStorage.setItem(ownerKey, JSON.stringify(cart));
+    }
+
+    let saved = localStorage.getItem(nextOwnerKey);
+    if (saved === null) {
+      saved = localStorage.getItem("cart");
+      if (saved !== null) localStorage.setItem(nextOwnerKey, saved);
+    }
+    localStorage.removeItem("cart");
+
+    if (saved !== null) {
       try {
-        setCart(JSON.parse(saved));
-      } catch {}
+        const parsed: unknown = JSON.parse(saved);
+        setCart(
+          Array.isArray(parsed)
+            ? parsed.filter(
+                (item): item is CartItem =>
+                  typeof item?.id === "number" &&
+                  typeof item?.soluong === "number" &&
+                  item.soluong > 0
+              )
+            : []
+        );
+      } catch {
+        setCart([]);
+      }
+    } else {
+      setCart([]);
     }
-    setLoaded(true);
-  }, []);
+    setOwnerKey(nextOwnerKey);
+  }, [authLoaded, user, ownerKey, cart]);
 
   useEffect(() => {
-    if (loaded) {
-      localStorage.setItem("cart", JSON.stringify(cart));
+    const activeOwnerKey = user ? `cart:user:${user.id}` : "cart:guest";
+    if (authLoaded && ownerKey === activeOwnerKey) {
+      localStorage.setItem(ownerKey, JSON.stringify(cart));
     }
-  }, [cart, loaded]);
+  }, [authLoaded, user, ownerKey, cart]);
 
   const addToCart = (id: number, soluong = 1) => {
     setCart((prev) => {
