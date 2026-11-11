@@ -3,7 +3,9 @@ import type { Category, Product, Customer, News, Order, OrderItem } from "@/type
 
 // ========== DANH MỤC ==========
 export async function getCategories(): Promise<Category[]> {
-  return query<Category>("SELECT id, tendanhmuc FROM danhmuc ORDER BY tendanhmuc");
+  return query<Category>(
+    "SELECT id, tendanhmuc FROM danhmuc ORDER BY CASE WHEN tendanhmuc = 'Khác' THEN 1 ELSE 0 END, tendanhmuc"
+  );
 }
 
 export async function getCategoryById(id: number): Promise<Category | null> {
