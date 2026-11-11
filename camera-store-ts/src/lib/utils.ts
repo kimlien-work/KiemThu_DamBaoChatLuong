@@ -34,6 +34,7 @@ export function isValidPassword(value: string): boolean {
   return (
     Array.from(value).length >= 8 &&
     /\p{Lu}/u.test(value) &&
+    /\p{N}/u.test(value) &&
     /[^\p{L}\p{N}\s]/u.test(value)
   );
 }

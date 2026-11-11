@@ -8,7 +8,7 @@ export async function POST(req: Request) {
     const password = body.matkhau || body.mat_khau;
     if (typeof password !== "string" || !isValidPassword(password)) {
       return NextResponse.json(
-        { error: "Mật khẩu phải có ít nhất 8 ký tự, gồm 1 chữ viết hoa và 1 ký tự đặc biệt" },
+        { error: "Mật khẩu phải có ít nhất 8 ký tự, gồm 1 chữ viết hoa, 1 chữ số và 1 ký tự đặc biệt" },
         { status: 400 }
       );
     }

@@ -17,7 +17,7 @@ export async function POST(req: Request) {
     }
     if (!isValidPassword(newPassword)) {
       return NextResponse.json(
-        { error: "Mật khẩu mới phải có ít nhất 8 ký tự, gồm 1 chữ viết hoa và 1 ký tự đặc biệt" },
+        { error: "Mật khẩu mới phải có ít nhất 8 ký tự, gồm 1 chữ viết hoa, 1 chữ số và 1 ký tự đặc biệt" },
         { status: 400 }
       );
     }

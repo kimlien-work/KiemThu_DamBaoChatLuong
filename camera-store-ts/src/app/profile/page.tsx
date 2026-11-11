@@ -43,7 +43,7 @@ export default function ProfilePage() {
       return;
     }
     if (!isValidPassword(passwordForm.next)) {
-      setPasswordError("Mật khẩu mới phải có ít nhất 8 ký tự, gồm 1 chữ viết hoa và 1 ký tự đặc biệt");
+      setPasswordError("Mật khẩu mới phải có ít nhất 8 ký tự, gồm 1 chữ viết hoa, 1 chữ số và 1 ký tự đặc biệt");
       return;
     }
 
@@ -120,7 +120,7 @@ export default function ProfilePage() {
                 required
                 {...(key === "next" ? {
                   minLength: 8,
-                  title: "Mật khẩu cần ít nhất 8 ký tự, gồm 1 chữ viết hoa và 1 ký tự đặc biệt",
+                  title: "Mật khẩu cần ít nhất 8 ký tự, gồm 1 chữ viết hoa, 1 chữ số và 1 ký tự đặc biệt",
                 } : {})}
               />
               {key === "current" && (
@@ -131,7 +131,7 @@ export default function ProfilePage() {
             </div>
             {key === "next" && (
               <p className="mt-1 text-xs text-gray-500">
-                Tối thiểu 8 ký tự, gồm ít nhất 1 chữ viết hoa và 1 ký tự đặc biệt.
+                Tối thiểu 8 ký tự, gồm ít nhất 1 chữ viết hoa, 1 chữ số và 1 ký tự đặc biệt.
               </p>
             )}
           </div>

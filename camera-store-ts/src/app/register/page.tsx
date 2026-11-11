@@ -22,7 +22,7 @@ export default function RegisterPage() {
     setError("");
     if (!isValidPassword(form.matkhau)) {
       setLoading(false);
-      setError("Mật khẩu phải có ít nhất 8 ký tự, gồm 1 chữ viết hoa và 1 ký tự đặc biệt");
+      setError("Mật khẩu phải có ít nhất 8 ký tự, gồm 1 chữ viết hoa, 1 chữ số và 1 ký tự đặc biệt");
       return;
     }
     if (form.matkhau !== form.xacnhanmatkhau) {
@@ -68,7 +68,7 @@ export default function RegisterPage() {
                 required={key !== "email"}
                 {...(key === "matkhau" ? {
                   minLength: 8,
-                  title: "Mật khẩu cần ít nhất 8 ký tự, gồm 1 chữ viết hoa và 1 ký tự đặc biệt",
+                  title: "Mật khẩu cần ít nhất 8 ký tự, gồm 1 chữ viết hoa, 1 chữ số và 1 ký tự đặc biệt",
                 } : {})}
                 {...(key === "email" ? {
                   title: "Vui lòng nhập email đúng định dạng, ví dụ ten@example.com",
@@ -88,7 +88,7 @@ export default function RegisterPage() {
             </div>
             {key === "matkhau" && (
               <p className="mt-1 text-xs text-gray-500">
-                Tối thiểu 8 ký tự, gồm ít nhất 1 chữ viết hoa và 1 ký tự đặc biệt.
+                Tối thiểu 8 ký tự, gồm ít nhất 1 chữ viết hoa, 1 chữ số và 1 ký tự đặc biệt.
               </p>
             )}
           </div>
