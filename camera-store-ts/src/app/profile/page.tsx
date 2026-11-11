@@ -77,11 +77,20 @@ export default function ProfilePage() {
           <div key={key}>
             <label className="block text-sm font-medium mb-1">{label}</label>
             <input
-              type="text"
+              type={key === "dien_thoai" ? "tel" : key === "email" ? "email" : "text"}
               value={form[key]}
               onChange={(e) => setForm({ ...form, [key]: e.target.value })}
               className="w-full border rounded px-3 py-2"
               required={key !== "email"}
+              {...(key === "email" ? {
+                title: "Vui lòng nhập email đúng định dạng, ví dụ ten@example.com",
+              } : {})}
+              {...(key === "dien_thoai" ? {
+                inputMode: "numeric" as const,
+                maxLength: 12,
+                pattern: "[0-9]{10,12}",
+                title: "Số điện thoại phải có từ 10 đến 12 chữ số, không chứa khoảng trắng hoặc ký tự khác",
+              } : {})}
             />
           </div>
         ))}

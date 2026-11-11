@@ -21,3 +21,11 @@ export function imageUrl(path: string | null | undefined): string {
 export function formatPrice(n: number) {
   return Number(n).toLocaleString("vi-VN") + "đ";
 }
+
+export function isValidPhoneNumber(value: string): boolean {
+  return /^\d{10,12}$/.test(value);
+}
+
+export function isValidEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}

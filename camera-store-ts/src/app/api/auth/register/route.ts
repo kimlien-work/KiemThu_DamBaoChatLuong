@@ -1,9 +1,25 @@
 import { NextResponse } from "next/server";
 import { createCustomer, findCustomerByUsername } from "@/lib/queries";
+import { isValidEmail, isValidPhoneNumber } from "@/lib/utils";
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
+    if (typeof body.dien_thoai !== "string" || !isValidPhoneNumber(body.dien_thoai)) {
+      return NextResponse.json(
+        { error: "Số điện thoại phải có từ 10 đến 12 chữ số, không chứa khoảng trắng hoặc ký tự khác" },
+        { status: 400 }
+      );
+    }
+    if (
+      body.email !== undefined &&
+      body.email !== null &&
+      body.email !== "" &&
+      (typeof body.email !== "string" || !isValidEmail(body.email))
+    ) {
+      return NextResponse.json({ error: "Email không đúng định dạng" }, { status: 400 });
+    }
+
     const exists = await findCustomerByUsername(body.tendangnhap);
     if (exists) {
       return NextResponse.json({ error: "Tên đăng nhập đã tồn tại" }, { status: 400 });
