@@ -29,3 +29,11 @@ export function isValidPhoneNumber(value: string): boolean {
 export function isValidEmail(value: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
+
+export function isValidPassword(value: string): boolean {
+  return (
+    Array.from(value).length >= 8 &&
+    /\p{Lu}/u.test(value) &&
+    /[^\p{L}\p{N}\s]/u.test(value)
+  );
+}

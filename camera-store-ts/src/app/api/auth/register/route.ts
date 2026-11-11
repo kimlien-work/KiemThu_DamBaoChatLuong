@@ -1,10 +1,17 @@
 import { NextResponse } from "next/server";
 import { createCustomer, findCustomerByUsername } from "@/lib/queries";
-import { isValidEmail, isValidPhoneNumber } from "@/lib/utils";
+import { isValidEmail, isValidPassword, isValidPhoneNumber } from "@/lib/utils";
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
+    const password = body.matkhau || body.mat_khau;
+    if (typeof password !== "string" || !isValidPassword(password)) {
+      return NextResponse.json(
+        { error: "Mật khẩu phải có ít nhất 8 ký tự, gồm 1 chữ viết hoa và 1 ký tự đặc biệt" },
+        { status: 400 }
+      );
+    }
     if (typeof body.dien_thoai !== "string" || !isValidPhoneNumber(body.dien_thoai)) {
       return NextResponse.json(
         { error: "Số điện thoại phải có từ 10 đến 12 chữ số, không chứa khoảng trắng hoặc ký tự khác" },
@@ -27,7 +34,7 @@ export async function POST(req: Request) {
     const id = await createCustomer({
       ten: body.ten,
       tendangnhap: body.tendangnhap,
-      mat_khau: body.matkhau || body.mat_khau,
+      mat_khau: password,
       email: body.email,
       dien_thoai: body.dien_thoai,
       dia_chi: body.diachi || body.dia_chi,

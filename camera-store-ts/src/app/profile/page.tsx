@@ -3,6 +3,7 @@
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
+import { isValidPassword } from "@/lib/utils";
 
 export default function ProfilePage() {
   const { user, updateProfile, changePassword } = useAuth();
@@ -39,6 +40,10 @@ export default function ProfilePage() {
     setPasswordError("");
     if (passwordForm.next !== passwordForm.confirm) {
       setPasswordError("Mật khẩu xác nhận không khớp");
+      return;
+    }
+    if (!isValidPassword(passwordForm.next)) {
+      setPasswordError("Mật khẩu mới phải có ít nhất 8 ký tự, gồm 1 chữ viết hoa và 1 ký tự đặc biệt");
       return;
     }
 
@@ -113,6 +118,10 @@ export default function ProfilePage() {
                 onChange={(e) => setPasswordForm({ ...passwordForm, [key]: e.target.value })}
                 className="min-w-0 flex-1 border rounded-l px-3 py-2"
                 required
+                {...(key === "next" ? {
+                  minLength: 8,
+                  title: "Mật khẩu cần ít nhất 8 ký tự, gồm 1 chữ viết hoa và 1 ký tự đặc biệt",
+                } : {})}
               />
               {key === "current" && (
                 <button type="button" onClick={() => setShowPasswords(!showPasswords)} className="border border-l-0 rounded-r px-3 text-sm text-cyan-700 hover:bg-gray-50" aria-label={showPasswords ? "Ẩn mật khẩu" : "Hiện mật khẩu"}>
@@ -120,6 +129,11 @@ export default function ProfilePage() {
                 </button>
               )}
             </div>
+            {key === "next" && (
+              <p className="mt-1 text-xs text-gray-500">
+                Tối thiểu 8 ký tự, gồm ít nhất 1 chữ viết hoa và 1 ký tự đặc biệt.
+              </p>
+            )}
           </div>
         ))}
         <button type="submit" disabled={changingPassword} className="w-full bg-cyan-600 text-white py-2.5 rounded font-medium hover:bg-cyan-700 disabled:opacity-50">

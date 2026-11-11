@@ -4,6 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Link from "next/link";
+import { isValidPassword } from "@/lib/utils";
 
 export default function RegisterPage() {
   const { register } = useAuth();
@@ -19,6 +20,11 @@ export default function RegisterPage() {
     e.preventDefault();
     setLoading(true);
     setError("");
+    if (!isValidPassword(form.matkhau)) {
+      setLoading(false);
+      setError("Mật khẩu phải có ít nhất 8 ký tự, gồm 1 chữ viết hoa và 1 ký tự đặc biệt");
+      return;
+    }
     if (form.matkhau !== form.xacnhanmatkhau) {
       setLoading(false);
       setError("Mật khẩu xác nhận không khớp");
@@ -60,6 +66,10 @@ export default function RegisterPage() {
                 onChange={(e) => setForm({ ...form, [key]: e.target.value })}
                 className={`w-full border px-3 py-2 ${key === "matkhau" || key === "xacnhanmatkhau" ? "min-w-0 flex-1 rounded-l" : "rounded"} ${key === "matkhau" || key === "xacnhanmatkhau" ? "rounded-r-none" : ""}`}
                 required={key !== "email"}
+                {...(key === "matkhau" ? {
+                  minLength: 8,
+                  title: "Mật khẩu cần ít nhất 8 ký tự, gồm 1 chữ viết hoa và 1 ký tự đặc biệt",
+                } : {})}
                 {...(key === "email" ? {
                   title: "Vui lòng nhập email đúng định dạng, ví dụ ten@example.com",
                 } : {})}
@@ -76,6 +86,11 @@ export default function RegisterPage() {
                 </button>
               )}
             </div>
+            {key === "matkhau" && (
+              <p className="mt-1 text-xs text-gray-500">
+                Tối thiểu 8 ký tự, gồm ít nhất 1 chữ viết hoa và 1 ký tự đặc biệt.
+              </p>
+            )}
           </div>
         ))}
         <button type="submit" disabled={loading} className="w-full bg-cyan-600 text-white py-2.5 rounded font-medium hover:bg-cyan-700 disabled:opacity-50">

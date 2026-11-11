@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { changeCustomerPassword } from "@/lib/queries";
+import { isValidPassword } from "@/lib/utils";
 
 export async function POST(req: Request) {
   try {
@@ -13,6 +14,12 @@ export async function POST(req: Request) {
       !newPassword
     ) {
       return NextResponse.json({ error: "Vui lòng nhập đầy đủ thông tin" }, { status: 400 });
+    }
+    if (!isValidPassword(newPassword)) {
+      return NextResponse.json(
+        { error: "Mật khẩu mới phải có ít nhất 8 ký tự, gồm 1 chữ viết hoa và 1 ký tự đặc biệt" },
+        { status: 400 }
+      );
     }
 
     const changed = await changeCustomerPassword(customerId, currentPassword, newPassword);
