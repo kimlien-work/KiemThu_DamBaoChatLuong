@@ -14,7 +14,7 @@ function formatPrice(n: number) {
 export default function ProductDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { addToCart } = useCart();
+  const { cart, addToCart } = useCart();
   const [product, setProduct] = useState<Product | null>(null);
   const [related, setRelated] = useState<Product[]>([]);
   const [qty, setQty] = useState(1);
@@ -41,12 +41,24 @@ export default function ProductDetailPage() {
 
   const handleAdd = () => {
     if (hethang) return;
+    const quantityInCart = cart.find((item) => item.id === product.id)?.soluong || 0;
+    const requestedQuantity = quantityInCart + qty;
+    if (requestedQuantity > product.soluongton) {
+      alert(`Sản phẩm "${product.tenmathang}" chỉ còn ${product.soluongton} sản phẩm trong kho`);
+      return;
+    }
     addToCart(product.id, qty);
     alert("Đã thêm vào giỏ hàng!");
   };
 
   const handleBuyNow = () => {
     if (hethang) return;
+    const quantityInCart = cart.find((item) => item.id === product.id)?.soluong || 0;
+    const requestedQuantity = quantityInCart + qty;
+    if (requestedQuantity > product.soluongton) {
+      alert(`Sản phẩm "${product.tenmathang}" chỉ còn ${product.soluongton} sản phẩm trong kho`);
+      return;
+    }
     addToCart(product.id, qty);
     router.push("/cart");
   };
@@ -90,7 +102,16 @@ export default function ProductDetailPage() {
                   min={1}
                   max={product.soluongton}
                   value={qty}
-                  onChange={(e) => setQty(Math.max(1, Number(e.target.value)))}
+                  onChange={(e) => {
+                    const value = Number(e.target.value);
+                    if (!Number.isFinite(value)) return;
+                    if (value > product.soluongton) {
+                      alert(`Sản phẩm "${product.tenmathang}" chỉ còn ${product.soluongton} sản phẩm trong kho`);
+                      setQty(product.soluongton);
+                      return;
+                    }
+                    setQty(Math.max(1, Math.floor(value)));
+                  }}
                   className="w-16 text-center border-l py-2 outline-none"
                 />
               </div>

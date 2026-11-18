@@ -148,6 +148,42 @@ export async function createOrder(data: {
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();
+
+    if (!Array.isArray(data.items) || data.items.length === 0) {
+      throw new Error("Giỏ hàng không có sản phẩm");
+    }
+
+    const quantities = new Map<number, number>();
+    for (const item of data.items) {
+      const productId = Number(item.mathang_id);
+      const quantity = Number(item.soluong);
+      if (!Number.isInteger(productId) || productId <= 0) {
+        throw new Error("Sản phẩm trong giỏ hàng không hợp lệ");
+      }
+      if (!Number.isInteger(quantity) || quantity <= 0) {
+        throw new Error("Số lượng sản phẩm phải lớn hơn 0");
+      }
+      quantities.set(productId, (quantities.get(productId) || 0) + quantity);
+    }
+
+    for (const [productId, quantity] of quantities) {
+      const [rows] = await conn.execute(
+        "SELECT tenmathang, soluongton FROM mathang WHERE id = ? FOR UPDATE",
+        [productId]
+      );
+      const products = rows as { tenmathang: string; soluongton: number }[];
+      if (products.length === 0) {
+        throw new Error("Sản phẩm không tồn tại");
+      }
+
+      const stock = Number(products[0].soluongton);
+      if (stock < quantity) {
+        throw new Error(
+          `Sản phẩm "${products[0].tenmathang}" chỉ còn ${stock} sản phẩm trong kho`
+        );
+      }
+    }
+
     const [orderResult] = await conn.execute(
       `INSERT INTO donhang (khach_hang_id, tongtien, ghichu, trangthai) VALUES (?, ?, ?, 0)`,
       [data.khach_hang_id, data.tongtien, data.ghichu || null]

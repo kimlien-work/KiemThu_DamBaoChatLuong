@@ -59,6 +59,12 @@ export default function CheckoutPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!diachi.trim()) { alert("Vui lòng nhập địa chỉ giao hàng"); return; }
+    const overStock = items.find((item) => item.soluong > item.soluongton);
+    if (overStock) {
+      alert(`Sản phẩm "${overStock.tenmathang}" chỉ còn ${overStock.soluongton} sản phẩm trong kho`);
+      router.push("/cart");
+      return;
+    }
     setLoading(true);
     try {
       const res = await fetch("/api/orders", {

@@ -46,6 +46,11 @@ export default function CartPage() {
       router.push("/login");
       return;
     }
+    const overStock = items.find((item) => item.soluong > item.soluongton);
+    if (overStock) {
+      alert(`Sản phẩm "${overStock.tenmathang}" chỉ còn ${overStock.soluongton} sản phẩm trong kho`);
+      return;
+    }
     router.push("/checkout");
   };
 
@@ -96,7 +101,16 @@ export default function CartPage() {
                     min={1}
                     max={item.soluongton}
                     value={item.soluong}
-                    onChange={(e) => updateQuantity(item.id, Number(e.target.value))}
+                    onChange={(e) => {
+                      const value = Number(e.target.value);
+                      if (!Number.isFinite(value)) return;
+                      if (value > item.soluongton) {
+                        alert(`Sản phẩm "${item.tenmathang}" chỉ còn ${item.soluongton} sản phẩm trong kho`);
+                        updateQuantity(item.id, item.soluongton);
+                        return;
+                      }
+                      updateQuantity(item.id, Math.max(1, Math.floor(value)));
+                    }}
                     className="w-16 border rounded text-center py-1"
                   />
                 </td>
