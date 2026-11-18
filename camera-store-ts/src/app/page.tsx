@@ -1,5 +1,5 @@
 import ProductCard from "@/components/ProductCard";
-import { getCategories, getProductsByCategory, getTopViewed } from "@/lib/queries";
+import { getCategories, getProductsByCategory, getTopSelling, getTopViewed } from "@/lib/queries";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -7,11 +7,13 @@ export const dynamic = "force-dynamic";
 export default async function HomePage() {
   let categories: Awaited<ReturnType<typeof getCategories>> = [];
   let topViewed: Awaited<ReturnType<typeof getTopViewed>> = [];
+  let topSelling: Awaited<ReturnType<typeof getTopSelling>> = [];
   let error: string | null = null;
 
   try {
     categories = await getCategories();
     topViewed = await getTopViewed(8);
+    topSelling = await getTopSelling(8);
   } catch (e) {
     error = e instanceof Error ? e.message : "Không kết nối được database";
   }
@@ -69,6 +71,19 @@ export default async function HomePage() {
           </section>
         );
       })}
+
+      {topSelling.length > 0 && (
+        <section className="mb-10">
+          <h2 className="text-xl font-bold text-cyan-700 uppercase border-b pb-2 mb-4">
+            Sản phẩm bán chạy
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {topSelling.map((p) => (
+              <ProductCard key={p.id} product={p} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {topViewed.length > 0 && (
         <section className="mb-10">

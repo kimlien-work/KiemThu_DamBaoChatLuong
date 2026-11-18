@@ -64,6 +64,14 @@ export async function getTopViewed(limit = 8): Promise<Product[]> {
   );
 }
 
+export async function getTopSelling(limit = 8): Promise<Product[]> {
+  return query<Product>(
+    `SELECT id, tenmathang, mota, giagoc, giaban, soluongton, hinhanh, danhmuc_id, luotxem, luotmua, trangthai
+     FROM mathang WHERE trangthai = 1 ORDER BY luotmua DESC, id DESC LIMIT ?`,
+    [limit]
+  );
+}
+
 export async function increaseView(id: number): Promise<void> {
   await query("UPDATE mathang SET luotxem = luotxem + 1 WHERE id = ?", [id]);
 }
