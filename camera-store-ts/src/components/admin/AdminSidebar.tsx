@@ -9,6 +9,7 @@ const links = [
   { href: "/admin/products", label: "Sản phẩm", icon: "📷" },
   { href: "/admin/categories", label: "Danh mục", icon: "📁" },
   { href: "/admin/orders", label: "Đơn hàng", icon: "📦" },
+  { href: "/admin/stats", label: "Thống kê", icon: "📈" },
   { href: "/admin/customers", label: "Khách hàng", icon: "👥" },
   { href: "/admin/staff", label: "Nhân viên", icon: "🧑‍💼" },
   { href: "/admin/news", label: "Tin tức", icon: "📰" },
