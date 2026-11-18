@@ -4,15 +4,24 @@ import Link from "next/link";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import type { Category } from "@/types";
 
 export default function Header() {
   const pathname = usePathname();
+  const router = useRouter();
   const { totalItems } = useCart();
   const { user, logout } = useAuth();
   const [open, setOpen] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [searchKeyword, setSearchKeyword] = useState("");
+
+  const submitSearch = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const keyword = searchKeyword.trim();
+    if (!keyword) return;
+    router.push(`/search?q=${encodeURIComponent(keyword)}`);
+  };
 
   useEffect(() => {
     if (pathname.startsWith("/admin")) return;
@@ -60,6 +69,23 @@ export default function Header() {
           </nav>
 
           <div className="flex items-center gap-4">
+            <form onSubmit={submitSearch} className="hidden md:flex items-center">
+              <input
+                type="search"
+                value={searchKeyword}
+                onChange={(e) => setSearchKeyword(e.target.value)}
+                placeholder="Tìm sản phẩm..."
+                className="w-44 lg:w-56 h-9 border border-gray-300 rounded-l-lg px-3 text-sm outline-none focus:border-cyan-500"
+              />
+              <button
+                type="submit"
+                aria-label="Tìm kiếm"
+                className="h-9 px-3 border border-l-0 border-cyan-600 bg-cyan-600 text-white rounded-r-lg hover:bg-cyan-700"
+              >
+                🔍
+              </button>
+            </form>
+
             <Link href="/cart" className="relative text-gray-700 hover:text-cyan-600">
               <span className="text-xl">🛒</span>
               {totalItems > 0 && (
@@ -114,6 +140,22 @@ export default function Header() {
 
         {open && (
           <div className="md:hidden pb-4 border-t">
+            <form onSubmit={submitSearch} className="flex pt-3 pb-2">
+              <input
+                type="search"
+                value={searchKeyword}
+                onChange={(e) => setSearchKeyword(e.target.value)}
+                placeholder="Tìm sản phẩm..."
+                className="flex-1 h-9 border border-gray-300 rounded-l-lg px-3 text-sm outline-none focus:border-cyan-500"
+              />
+              <button
+                type="submit"
+                aria-label="Tìm kiếm"
+                className="h-9 px-3 border border-l-0 border-cyan-600 bg-cyan-600 text-white rounded-r-lg"
+              >
+                🔍
+              </button>
+            </form>
             <Link href="/" className="block py-2" onClick={() => setOpen(false)}>
               Trang chủ
             </Link>

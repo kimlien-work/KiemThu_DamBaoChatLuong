@@ -19,6 +19,20 @@ export async function getProducts(): Promise<Product[]> {
   );
 }
 
+export async function searchProducts(keyword: string): Promise<Product[]> {
+  const text = keyword.trim();
+  if (!text) return [];
+
+  return query<Product>(
+    `SELECT id, tenmathang, mota, giagoc, giaban, soluongton, hinhanh, danhmuc_id, luotxem, luotmua, trangthai
+     FROM mathang
+     WHERE trangthai = 1
+       AND (tenmathang LIKE ? OR mota LIKE ?)
+     ORDER BY id DESC`,
+    [`%${text}%`, `%${text}%`]
+  );
+}
+
 export async function getProductById(id: number): Promise<Product | null> {
   return queryOne<Product>(
     "SELECT id, tenmathang, mota, giagoc, giaban, soluongton, hinhanh, danhmuc_id, luotxem, luotmua, trangthai FROM mathang WHERE id = ?",
