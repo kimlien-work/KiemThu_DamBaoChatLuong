@@ -22,14 +22,21 @@ export async function findStaffByLogin(username: string, password: string): Prom
 }
 
 // ========== STATS ==========
-export async function getAdminStats() {
+export async function getAdminStats(from?: string, to?: string) {
   const [products] = await query<{ c: number }>("SELECT COUNT(*) as c FROM mathang");
   const [orders] = await query<{ c: number }>("SELECT COUNT(*) as c FROM donhang");
   const [customers] = await query<{ c: number }>("SELECT COUNT(*) as c FROM khach_hang");
   const [pending] = await query<{ c: number }>("SELECT COUNT(*) as c FROM donhang WHERE trangthai = 0");
-  const [revenue] = await query<{ s: number }>(
-    "SELECT COALESCE(SUM(tongtien),0) as s FROM donhang WHERE trangthai = 2"
-  );
+  let revenueSql =
+    "SELECT COALESCE(SUM(tongtien),0) as s FROM donhang WHERE trangthai = 2";
+  let revenueParams: unknown[] = [];
+
+  if (from && to) {
+    revenueSql += " AND ngay >= ? AND ngay < DATE_ADD(?, INTERVAL 1 DAY)";
+    revenueParams = [from, to];
+  }
+
+  const [revenue] = await query<{ s: number }>(revenueSql, revenueParams);
   return {
     products: products?.c ?? 0,
     orders: orders?.c ?? 0,
