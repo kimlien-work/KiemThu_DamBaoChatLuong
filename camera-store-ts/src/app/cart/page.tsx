@@ -14,6 +14,7 @@ export default function CartPage() {
   const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pendingRemove, setPendingRemove] = useState<(Product & { soluong: number }) | null>(null);
 
   useEffect(() => {
     if (cart.length === 0) {
@@ -53,6 +54,14 @@ export default function CartPage() {
     }
     router.push("/checkout");
   };
+
+  const confirmRemove = () => {
+    if (!pendingRemove) return;
+    removeFromCart(pendingRemove.id);
+    setPendingRemove(null);
+  };
+
+  const cancelRemove = () => setPendingRemove(null);
 
   if (loading) return <p className="text-center py-12">Đang tải giỏ hàng...</p>;
 
@@ -118,7 +127,11 @@ export default function CartPage() {
                   {formatPrice(Number(item.giaban) * item.soluong)}
                 </td>
                 <td className="p-3 text-center">
-                  <button onClick={() => removeFromCart(item.id)} className="text-red-500 hover:text-red-700 text-lg">
+                  <button
+                    onClick={() => setPendingRemove(item)}
+                    className="text-red-500 hover:text-red-700 text-lg"
+                    aria-label={`Xóa ${item.tenmathang} khỏi giỏ hàng`}
+                  >
                     🗑
                   </button>
                 </td>
@@ -139,6 +152,45 @@ export default function CartPage() {
         <Link href="/" className="px-5 py-2 border border-cyan-500 text-cyan-600 rounded hover:bg-cyan-50">Tiếp tục mua</Link>
         <button onClick={handleCheckout} className="px-6 py-2 bg-red-500 text-white rounded font-bold hover:bg-red-600">Thanh toán</button>
       </div>
+
+      {pendingRemove && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4"
+          onClick={cancelRemove}
+          role="presentation"
+        >
+          <div
+            className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="remove-product-title"
+          >
+            <h2 id="remove-product-title" className="text-lg font-bold text-slate-800">
+              Xác nhận xóa sản phẩm
+            </h2>
+            <p className="mt-2 text-sm text-slate-600">
+              Bạn có chắc muốn xóa <strong>{pendingRemove.tenmathang}</strong> khỏi giỏ hàng?
+            </p>
+            <div className="mt-5 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={cancelRemove}
+                className="rounded-lg border border-slate-300 px-4 py-2 text-slate-700 hover:bg-slate-50"
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                onClick={confirmRemove}
+                className="rounded-lg bg-red-500 px-4 py-2 font-medium text-white hover:bg-red-600"
+              >
+                Xác nhận
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
