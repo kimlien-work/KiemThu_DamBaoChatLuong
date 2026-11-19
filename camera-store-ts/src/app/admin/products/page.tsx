@@ -27,6 +27,10 @@ export default function AdminProductsPage() {
   const [sort, setSort] = useState("default");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState("");
+  const [imageError, setImageError] = useState("");
+  const [uploading, setUploading] = useState(false);
 
   const load = async (
     keyword = searchQuery,
@@ -99,6 +103,9 @@ export default function AdminProductsPage() {
   const openAdd = () => {
     setEditId(null);
     setForm({ ...empty, danhmuc_id: categories[0]?.id || 0 });
+    setSelectedImage(null);
+    setPreviewUrl("");
+    setImageError("");
     setShowForm(true);
   };
 
@@ -113,25 +120,95 @@ export default function AdminProductsPage() {
       hinhanh: p.hinhanh || "",
       danhmuc_id: p.danhmuc_id,
     });
+    setSelectedImage(null);
+    setPreviewUrl(p.hinhanh ? imageUrl(p.hinhanh) : "");
+    setImageError("");
     setShowForm(true);
+  };
+
+  const selectImage = (file: File | undefined) => {
+    setImageError("");
+    if (!file) return;
+
+    const allowedTypes = ["image/jpeg", "image/png"];
+    if (!allowedTypes.includes(file.type)) {
+      setSelectedImage(null);
+      setPreviewUrl("");
+      setImageError("Chỉ hỗ trợ ảnh JPG, JPEG hoặc PNG.");
+      return;
+    }
+    if (file.size === 0) {
+      setSelectedImage(null);
+      setPreviewUrl("");
+      setImageError("Tệp ảnh rỗng hoặc không thể đọc.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setSelectedImage(null);
+      setPreviewUrl("");
+      setImageError("Dung lượng ảnh không được vượt quá 5 MB.");
+      return;
+    }
+
+    setSelectedImage(file);
+    setPreviewUrl(URL.createObjectURL(file));
+  };
+
+  const cancelImageSelection = () => {
+    setSelectedImage(null);
+    setImageError("");
+    setPreviewUrl(editId ? imageUrl(form.hinhanh) : "");
   };
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     const method = editId ? "PUT" : "POST";
-    const body = editId ? { id: editId, ...form } : form;
-    const res = await fetch("/api/admin/products", {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    if (res.ok) {
-      setMsg(editId ? "Đã cập nhật" : "Đã thêm sản phẩm");
-      setShowForm(false);
-      load();
-    } else {
-      const d = await res.json();
-      setMsg(d.error || "Lỗi");
+    let uploadedPath: string | null = null;
+    let nextForm = { ...form };
+    setUploading(true);
+    setImageError("");
+
+    try {
+      if (selectedImage) {
+        const uploadData = new FormData();
+        uploadData.set("file", selectedImage);
+        const uploadResponse = await fetch("/api/admin/products/upload", {
+          method: "POST",
+          body: uploadData,
+        });
+        const uploadResult = await uploadResponse.json();
+        if (!uploadResponse.ok) {
+          throw new Error(uploadResult.error || "Không thể tải ảnh lên.");
+        }
+        uploadedPath = uploadResult.path;
+        nextForm = { ...nextForm, hinhanh: uploadedPath };
+      }
+
+      const body = editId ? { id: editId, ...nextForm } : nextForm;
+      const res = await fetch("/api/admin/products", {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (res.ok) {
+        setMsg(editId ? "Đã cập nhật" : "Đã thêm sản phẩm");
+        setShowForm(false);
+        setSelectedImage(null);
+        if (previewUrl.startsWith("blob:")) URL.revokeObjectURL(previewUrl);
+        setPreviewUrl("");
+        load();
+      } else {
+        const d = await res.json();
+        if (uploadedPath) {
+          await fetch(`/api/admin/products/upload?path=${encodeURIComponent(uploadedPath)}`, { method: "DELETE" });
+        }
+        setMsg(d.error || "Lỗi");
+      }
+    } catch (e) {
+      setImageError(e instanceof Error ? e.message : "Không thể tải ảnh lên.");
+      setMsg("");
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -245,6 +322,48 @@ export default function AdminProductsPage() {
                 onChange={(e) => setForm({ ...form, hinhanh: e.target.value })}
                 placeholder="images/products/..." />
             </div>
+            <div className="md:col-span-2">
+              <label className="text-sm font-medium">Hình ảnh sản phẩm</label>
+              <div className="mt-2 flex flex-wrap items-center gap-4">
+                {previewUrl && (
+                  <img
+                    src={previewUrl}
+                    alt="Xem trước ảnh sản phẩm"
+                    className="w-32 h-32 object-contain border rounded-lg bg-slate-50"
+                    onError={() => {
+                      if (previewUrl.startsWith("blob:")) {
+                        URL.revokeObjectURL(previewUrl);
+                        setSelectedImage(null);
+                        setPreviewUrl("");
+                        setImageError("Tệp ảnh bị hỏng hoặc không thể đọc.");
+                      }
+                    }}
+                  />
+                )}
+                <div className="space-y-2">
+                  <input
+                    id="product-image-input"
+                    type="file"
+                    accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+                    className="hidden"
+                    onChange={(e) => selectImage(e.target.files?.[0])}
+                  />
+                  <label htmlFor="product-image-input" className="inline-block cursor-pointer border border-cyan-600 text-cyan-700 px-4 py-2 rounded-lg hover:bg-cyan-50">
+                    Tải ảnh từ máy tính
+                  </label>
+                  {selectedImage && (
+                    <>
+                      <p className="text-xs text-slate-500">{selectedImage.name}</p>
+                      <button type="button" onClick={cancelImageSelection} className="text-xs text-red-600 hover:underline">
+                        Hủy ảnh đã chọn
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+              {uploading && <p className="mt-2 text-sm text-cyan-700">Đang tải ảnh lên...</p>}
+              {imageError && <p className="mt-2 text-sm text-red-600">{imageError}</p>}
+            </div>
           </div>
           <div>
             <label className="text-sm font-medium">Mô tả</label>
@@ -252,7 +371,9 @@ export default function AdminProductsPage() {
               onChange={(e) => setForm({ ...form, mota: e.target.value })} />
           </div>
           <div className="flex gap-2">
-            <button type="submit" className="bg-cyan-600 text-white px-5 py-2 rounded-lg">Lưu</button>
+            <button type="submit" disabled={uploading} className="bg-cyan-600 text-white px-5 py-2 rounded-lg disabled:opacity-50">
+              {uploading ? "Đang lưu..." : "Lưu"}
+            </button>
             <button type="button" onClick={() => setShowForm(false)} className="border px-5 py-2 rounded-lg">Hủy</button>
           </div>
         </form>
