@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAdminAuth } from "@/context/AdminAuthContext";
+import { useState } from "react";
 
 const links = [
   { href: "/admin", label: "Bảng điều khiển", icon: "📊" },
@@ -18,6 +19,16 @@ const links = [
 export default function AdminSidebar() {
   const pathname = usePathname();
   const { admin, logout } = useAdminAuth();
+  const [logoutError, setLogoutError] = useState("");
+
+  const handleLogout = async () => {
+    setLogoutError("");
+    try {
+      await logout();
+    } catch {
+      setLogoutError("Không thể đăng xuất. Vui lòng thử lại.");
+    }
+  };
 
   return (
     <aside className="w-64 min-h-screen bg-slate-900 text-slate-200 flex flex-col shrink-0">
@@ -51,6 +62,7 @@ export default function AdminSidebar() {
         })}
       </nav>
       <div className="p-3 border-t border-slate-700 space-y-1">
+        {logoutError && <p className="px-3 text-xs text-red-300">{logoutError}</p>}
         <Link
           href="/"
           className="block px-3 py-2 text-sm text-slate-400 hover:text-white"
@@ -58,7 +70,7 @@ export default function AdminSidebar() {
           ← Về cửa hàng
         </Link>
         <button
-          onClick={logout}
+          onClick={handleLogout}
           className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-slate-800 rounded-lg"
         >
           Đăng xuất

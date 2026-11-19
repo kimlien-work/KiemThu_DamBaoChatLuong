@@ -34,13 +34,13 @@ export default function AdminLoginPage() {
             <div className="bg-red-50 text-red-600 text-sm p-3 rounded-lg text-center">{error}</div>
           )}
           <div>
-            <label className="block text-sm font-medium mb-1">Tên đăng nhập (Email)</label>
+            <label className="block text-sm font-medium mb-1">Tên đăng nhập hoặc mã nhân viên</label>
             <input
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               className="w-full border rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-cyan-500"
-              placeholder="abc@abc.com"
+              placeholder="abc@abc.com hoặc NV000001"
               required
             />
           </div>
@@ -63,7 +63,7 @@ export default function AdminLoginPage() {
           </button>
         </form>
         <p className="text-xs text-slate-400 text-center mt-4">
-          Demo: abc@abc.com / abc
+          Tài khoản demo: abc@abc.com / abc
         </p>
       </div>
     </div>

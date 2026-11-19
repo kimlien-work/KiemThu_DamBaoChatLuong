@@ -12,7 +12,8 @@ import type { Staff } from "@/types";
 interface AdminAuthContextType {
   admin: Staff | null;
   login: (username: string, password: string) => Promise<string | null>;
-  logout: () => void;
+  logout: () => Promise<void>;
+  updateAdmin: (staff: Staff) => void;
   loaded: boolean;
 }
 
@@ -23,37 +24,58 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem("admin_user");
-    if (saved) {
-      try {
-        setAdmin(JSON.parse(saved));
-      } catch {}
-    }
-    setLoaded(true);
+    let active = true;
+    fetch("/api/admin/session", { cache: "no-store" })
+      .then(async (res) => {
+        if (res.status === 401) return null;
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Không thể xác thực phiên đăng nhập");
+        return data.user as Staff;
+      })
+      .then((user) => {
+        if (active) setAdmin(user);
+      })
+      .catch((error: unknown) => {
+        console.error("[admin/session]", error);
+        if (active) setAdmin(null);
+      })
+      .finally(() => {
+        if (active) setLoaded(true);
+      });
+    return () => {
+      active = false;
+    };
   }, []);
 
-  useEffect(() => {
-    if (!loaded) return;
-    if (admin) localStorage.setItem("admin_user", JSON.stringify(admin));
-    else localStorage.removeItem("admin_user");
-  }, [admin, loaded]);
-
   const login = async (username: string, password: string) => {
-    const res = await fetch("/api/admin/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password }),
-    });
-    const data = await res.json();
-    if (!res.ok) return data.error || "Đăng nhập thất bại";
-    setAdmin(data.user);
-    return null;
+    try {
+      const res = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+      const data = await res.json();
+      if (!res.ok) return data.error || "Đăng nhập thất bại";
+      setAdmin(data.user);
+      return null;
+    } catch (error) {
+      console.error("[admin/login]", error);
+      return "Không thể kết nối máy chủ đăng nhập. Vui lòng thử lại.";
+    }
   };
 
-  const logout = () => setAdmin(null);
+  const logout = async () => {
+    const res = await fetch("/api/admin/logout", { method: "POST" });
+    if (!res.ok) throw new Error("Không thể đăng xuất");
+    setAdmin(null);
+  };
+
+  const updateAdmin = (staff: Staff) => {
+    setAdmin((current) => (current?.id === staff.id ? staff : current));
+  };
 
   return (
-    <AdminAuthContext.Provider value={{ admin, login, logout, loaded }}>
+    <AdminAuthContext.Provider value={{ admin, login, logout, updateAdmin, loaded }}>
       {children}
     </AdminAuthContext.Provider>
   );

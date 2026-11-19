@@ -39,6 +39,19 @@ export interface News {
   trangthai: number;
 }
 
+export interface Staff {
+  id: number;
+  ma_nhan_vien: string;
+  tendangnhap: string | null;
+  ten: string;
+  chucvu_id: number;
+  ten_chuc_vu?: string | null;
+  dien_thoai: string | null;
+  email: string | null;
+  hinhanh: string | null;
+  trangthai: number;
+}
+
 export interface OrderItem {
   id?: number;
   mathang_id: number;

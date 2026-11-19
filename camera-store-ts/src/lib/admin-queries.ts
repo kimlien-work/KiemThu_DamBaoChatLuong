@@ -1,6 +1,6 @@
 import { createHash } from "crypto";
 import { query, queryOne, getPool } from "./db";
-import type { Category, Product, Customer, News, Staff, AdminOrder, OrderItem } from "@/types";
+import type { Product, Customer, News, Staff, AdminOrder, OrderItem } from "@/types";
 
 export function md5(text: string): string {
   return createHash("md5").update(text).digest("hex");
@@ -11,14 +11,26 @@ export async function findStaffByLogin(username: string, password: string): Prom
   const hashed = md5(password);
   // Thử MD5 (như PHP) rồi plain text
   const staff = await queryOne<Staff>(
-    `SELECT n.id, n.tendangnhap, n.ten, n.chucvu_id, c.ten AS ten_chuc_vu,
+    `SELECT n.id, n.ma_nhan_vien, n.tendangnhap, n.ten, n.chucvu_id, c.ten AS ten_chuc_vu,
             n.dien_thoai, n.email, n.hinhanh, n.trangthai
      FROM nhan_vien n
      LEFT JOIN chuc_vu c ON n.chucvu_id = c.id
-     WHERE n.tendangnhap = ? AND (n.mat_khau = ? OR n.mat_khau = ?) AND n.trangthai = 1`,
-    [username, hashed, password]
+     WHERE (n.tendangnhap = ? OR n.ma_nhan_vien = ?)
+       AND (n.mat_khau = ? OR n.mat_khau = ?) AND n.trangthai = 1`,
+    [username, username, hashed, password]
   );
   return staff;
+}
+
+export async function findStaffById(id: number, activeOnly = true): Promise<Staff | null> {
+  return queryOne<Staff>(
+    `SELECT n.id, n.ma_nhan_vien, n.tendangnhap, n.ten, n.chucvu_id, c.ten AS ten_chuc_vu,
+            n.dien_thoai, n.email, n.hinhanh, n.trangthai
+     FROM nhan_vien n
+     LEFT JOIN chuc_vu c ON n.chucvu_id = c.id
+     WHERE n.id = ?${activeOnly ? " AND n.trangthai = 1" : ""}`,
+    [id]
+  );
 }
 
 // ========== STATS ==========
@@ -186,11 +198,36 @@ export async function adminToggleCustomer(id: number, trangthai: number): Promis
 // ========== STAFF ==========
 export async function adminGetStaff(): Promise<Staff[]> {
   return query<Staff>(
-    `SELECT n.id, n.tendangnhap, n.ten, n.chucvu_id, c.ten AS ten_chuc_vu,
+    `SELECT n.id, n.ma_nhan_vien, n.tendangnhap, n.ten, n.chucvu_id, c.ten AS ten_chuc_vu,
             n.dien_thoai, n.email, n.hinhanh, n.trangthai
      FROM nhan_vien n LEFT JOIN chuc_vu c ON n.chucvu_id = c.id
      ORDER BY n.id DESC`
   );
+}
+
+export async function adminUpdateStaffProfile(
+  id: number,
+  data: Partial<Pick<Staff, "ten" | "dien_thoai" | "email">>
+): Promise<Staff | null> {
+  const updates: string[] = [];
+  const values: unknown[] = [];
+
+  if (data.ten !== undefined) {
+    updates.push("ten = ?");
+    values.push(data.ten);
+  }
+  if (data.dien_thoai !== undefined) {
+    updates.push("dien_thoai = ?");
+    values.push(data.dien_thoai);
+  }
+  if (data.email !== undefined) {
+    updates.push("email = ?");
+    values.push(data.email);
+  }
+
+  if (updates.length === 0) return null;
+  await query(`UPDATE nhan_vien SET ${updates.join(", ")} WHERE id = ?`, [...values, id]);
+  return findStaffById(id, false);
 }
 
 // ========== NEWS ==========

@@ -21,7 +21,31 @@ DB_PORT=3306
 DB_USER=root
 DB_PASSWORD=
 DB_NAME=camera_shop
+ADMIN_SESSION_SECRET=
 ```
+
+`ADMIN_SESSION_SECRET` được dùng để ký phiên đăng nhập quản trị/nhân viên. Khi deploy production, bắt buộc đặt secret ngẫu nhiên dài ít nhất 32 ký tự trong environment variables; không chia sẻ hoặc đưa secret thật lên Git. Môi trường development tự tạo secret tạm thời nếu chưa cấu hình.
+
+### Cập nhật database đang sử dụng
+
+Database mới được import từ `database/camera_shop.sql` đã có chức vụ `Nhân viên` (mã chức vụ `2`) và mã NV duy nhất. Với database đã tồn tại, chạy một lần các câu lệnh sau trong phpMyAdmin:
+
+```sql
+INSERT INTO chuc_vu (id, ten, he_so)
+VALUES (2, 'Nhân viên', 1.00)
+ON DUPLICATE KEY UPDATE ten = VALUES(ten);
+
+ALTER TABLE nhan_vien
+  ADD COLUMN ma_nhan_vien VARCHAR(20) NULL AFTER id;
+UPDATE nhan_vien
+  SET ma_nhan_vien = CONCAT('NV', LPAD(id, 6, '0'))
+  WHERE ma_nhan_vien IS NULL;
+ALTER TABLE nhan_vien
+  MODIFY ma_nhan_vien VARCHAR(20) NOT NULL,
+  ADD UNIQUE KEY uk_nv_ma_nhan_vien (ma_nhan_vien);
+```
+
+Nhân viên có `chucvu_id = 2`; tài khoản phải có `trangthai = 1`. Có thể đăng nhập bằng tên đăng nhập hoặc mã NV. Tài khoản demo: quản trị `abc@abc.com`, nhân viên `ghi@abc.com` hoặc `def@abc.com`; mật khẩu đều là `abc`.
 
 ## 3. Chạy project
 
