@@ -33,6 +33,7 @@ export default function AdminCustomersPage() {
               <th className="p-3">SĐT</th>
               <th className="p-3">Email</th>
               <th className="p-3">Địa chỉ</th>
+              <th className="p-3">Điểm tích lũy</th>
               <th className="p-3">TT</th>
               <th className="p-3">Thao tác</th>
             </tr>
@@ -46,6 +47,7 @@ export default function AdminCustomersPage() {
                 <td className="p-3">{c.dien_thoai}</td>
                 <td className="p-3">{c.email}</td>
                 <td className="p-3 max-w-[160px] truncate">{c.dia_chi}</td>
+                <td className="p-3 font-medium">{Number(c.diem_tich_luy || 0).toLocaleString("vi-VN")}</td>
                 <td className="p-3">
                   <span className={`text-xs px-2 py-0.5 rounded ${c.trangthai ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"}`}>
                     {c.trangthai ? "Active" : "Khóa"}

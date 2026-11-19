@@ -47,6 +47,7 @@ export async function POST(req: Request) {
         email: body.email || null,
         dien_thoai: body.dien_thoai,
         dia_chi: body.diachi || body.dia_chi || null,
+        diem_tich_luy: 0,
         trangthai: 1,
       },
     });

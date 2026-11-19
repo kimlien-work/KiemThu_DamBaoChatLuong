@@ -1,6 +1,7 @@
 import { createHash } from "crypto";
 import { query, queryOne, getPool } from "./db";
 import type { Product, Customer, News, Staff, AdminOrder, OrderItem } from "@/types";
+import { calculateLoyaltyPoints } from "./loyalty";
 
 export function md5(text: string): string {
   return createHash("md5").update(text).digest("hex");
@@ -163,7 +164,73 @@ export async function adminGetOrders(): Promise<AdminOrder[]> {
 }
 
 export async function adminUpdateOrderStatus(id: number, trangthai: number): Promise<void> {
-  await query("UPDATE donhang SET trangthai = ? WHERE id = ?", [trangthai, id]);
+  if (![0, 1, 2, 3].includes(trangthai)) {
+    throw new Error("Trạng thái đơn hàng không hợp lệ");
+  }
+
+  const pool = getPool();
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+    const [rows] = await conn.execute(
+      "SELECT id, khach_hang_id, tongtien, trangthai FROM donhang WHERE id = ? FOR UPDATE",
+      [id]
+    );
+    const orders = rows as { id: number; khach_hang_id: number; tongtien: number; trangthai: number }[];
+    if (orders.length === 0) throw new Error("Đơn hàng không tồn tại");
+
+    const order = orders[0];
+    if (order.trangthai === trangthai) {
+      await conn.commit();
+      return;
+    }
+
+    if (trangthai === 2) {
+      const points = calculateLoyaltyPoints(Number(order.tongtien));
+      if (points > 0) {
+        await conn.execute(
+          `INSERT INTO lichsu_diem_tich_luy
+           (khach_hang_id, donhang_id, loai, diem, lydo)
+           VALUES (?, ?, 'CONG', ?, 'Cộng điểm khi đơn hàng hoàn tất')`,
+          [order.khach_hang_id, order.id, points]
+        );
+        await conn.execute(
+          "UPDATE khach_hang SET diem_tich_luy = diem_tich_luy + ? WHERE id = ?",
+          [points, order.khach_hang_id]
+        );
+      }
+    }
+
+    if (trangthai === 3 && order.trangthai === 2) {
+      const [ledgerRows] = await conn.execute(
+        `SELECT diem FROM lichsu_diem_tich_luy
+         WHERE donhang_id = ? AND khach_hang_id = ? AND loai = 'CONG'
+         LIMIT 1`,
+        [order.id, order.khach_hang_id]
+      );
+      const awarded = (ledgerRows as { diem: number }[])[0];
+      if (awarded && Number(awarded.diem) > 0) {
+        await conn.execute(
+          `INSERT INTO lichsu_diem_tich_luy
+           (khach_hang_id, donhang_id, loai, diem, lydo)
+           VALUES (?, ?, 'TRU', ?, 'Thu hồi điểm khi đơn hàng bị hủy/hoàn')`,
+          [order.khach_hang_id, order.id, Number(awarded.diem)]
+        );
+        await conn.execute(
+          "UPDATE khach_hang SET diem_tich_luy = GREATEST(0, diem_tich_luy - ?) WHERE id = ?",
+          [Number(awarded.diem), order.khach_hang_id]
+        );
+      }
+    }
+
+    await conn.execute("UPDATE donhang SET trangthai = ? WHERE id = ?", [trangthai, id]);
+    await conn.commit();
+  } catch (e) {
+    await conn.rollback();
+    throw e;
+  } finally {
+    conn.release();
+  }
 }
 
 export async function adminGetOrderDetail(id: number): Promise<AdminOrder | null> {
@@ -188,7 +255,7 @@ export async function adminGetOrderDetail(id: number): Promise<AdminOrder | null
 // ========== CUSTOMERS ==========
 export async function adminGetCustomers(): Promise<Customer[]> {
   return query<Customer>(
-    `SELECT id, ten, tendangnhap, email, dien_thoai, dia_chi, trangthai
+    `SELECT id, ten, tendangnhap, email, dien_thoai, dia_chi, diem_tich_luy, trangthai
      FROM khach_hang ORDER BY id DESC`
   );
 }

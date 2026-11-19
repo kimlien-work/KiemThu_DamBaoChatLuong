@@ -9,6 +9,7 @@ export interface AuthUser {
   email: string | null;
   dien_thoai: string;
   dia_chi: string | null;
+  diem_tich_luy: number;
   trangthai: number;
 }
 

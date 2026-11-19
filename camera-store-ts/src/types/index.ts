@@ -25,6 +25,7 @@ export interface Customer {
   email: string | null;
   dien_thoai: string;
   dia_chi: string | null;
+  diem_tich_luy: number;
   trangthai: number;
 }
 
@@ -70,6 +71,11 @@ export interface Order {
   ghichu: string | null;
   trangthai: number;
   items?: OrderItem[];
+}
+
+export interface AdminOrder extends Order {
+  tenkhachhang?: string | null;
+  dien_thoai?: string | null;
 }
 
 export interface CartItem {

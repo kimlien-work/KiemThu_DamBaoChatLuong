@@ -15,6 +15,10 @@ export default function ProfilePage() {
   const [passwordMsg, setPasswordMsg] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [changingPassword, setChangingPassword] = useState(false);
+  const [loyalty, setLoyalty] = useState<{
+    diem_tich_luy: number;
+    history: { id: number; donhang_id: number; loai: "CONG" | "TRU"; diem: number; lydo: string; created_at: string }[];
+  }>({ diem_tich_luy: 0, history: [] });
 
   useEffect(() => {
     if (!user) { router.push("/login"); return; }
@@ -24,6 +28,11 @@ export default function ProfilePage() {
       dien_thoai: user.dien_thoai || "",
       dia_chi: user.dia_chi || "",
     });
+    fetch(`/api/customer/points?customerId=${user.id}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (typeof data.diem_tich_luy === "number") setLoyalty(data);
+      });
   }, [user, router]);
 
   if (!user) return null;
@@ -67,6 +76,29 @@ export default function ProfilePage() {
   return (
     <div className="max-w-md mx-auto">
       <h1 className="text-2xl font-bold text-cyan-700 mb-6">Hồ sơ của tôi</h1>
+      <div className="mb-6 bg-cyan-50 border border-cyan-100 rounded-lg p-4">
+        <p className="text-sm text-cyan-800">Điểm tích lũy</p>
+        <p className="text-2xl font-bold text-cyan-700">{loyalty.diem_tich_luy.toLocaleString("vi-VN")} điểm</p>
+      </div>
+
+      {loyalty.history.length > 0 && (
+        <div className="mb-6 bg-white border rounded-lg p-4 shadow-sm">
+          <h2 className="font-bold text-cyan-700 mb-3">Lịch sử điểm</h2>
+          <div className="space-y-2">
+            {loyalty.history.map((item) => (
+              <div key={item.id} className="flex items-center justify-between border-b last:border-b-0 py-2 text-sm">
+                <div>
+                  <p className="font-medium">{item.lydo}</p>
+                  <p className="text-xs text-gray-500">Đơn #{item.donhang_id} · {new Date(item.created_at).toLocaleString("vi-VN")}</p>
+                </div>
+                <span className={item.loai === "CONG" ? "text-green-600 font-bold" : "text-red-600 font-bold"}>
+                  {item.loai === "CONG" ? "+" : "-"}{item.diem}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       <form onSubmit={handleSubmit} className="bg-white border rounded-lg p-6 shadow-sm space-y-4">
         {msg && <div className="bg-green-50 text-green-700 text-sm p-3 rounded">{msg}</div>}
         <div>

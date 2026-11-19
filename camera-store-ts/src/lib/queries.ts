@@ -83,7 +83,7 @@ export async function findCustomerByLogin(
 ): Promise<Customer | null> {
   // PHP gốc thường lưu plain text hoặc md5 — thử khớp trực tiếp trước
   return queryOne<Customer>(
-    `SELECT id, ten, tendangnhap, mat_khau, email, dien_thoai, dia_chi, trangthai
+    `SELECT id, ten, tendangnhap, mat_khau, email, dien_thoai, dia_chi, diem_tich_luy, trangthai
      FROM khach_hang WHERE tendangnhap = ? AND mat_khau = ? AND trangthai = 1`,
     [username, password]
   );
@@ -91,7 +91,7 @@ export async function findCustomerByLogin(
 
 export async function findCustomerByUsername(username: string): Promise<Customer | null> {
   return queryOne<Customer>(
-    `SELECT id, ten, tendangnhap, mat_khau, email, dien_thoai, dia_chi, trangthai
+    `SELECT id, ten, tendangnhap, mat_khau, email, dien_thoai, dia_chi, diem_tich_luy, trangthai
      FROM khach_hang WHERE tendangnhap = ?`,
     [username]
   );
@@ -143,6 +143,33 @@ export async function updateCustomer(
      dien_thoai = COALESCE(?, dien_thoai), dia_chi = COALESCE(?, dia_chi) WHERE id = ?`,
     [data.ten ?? null, data.email ?? null, data.dien_thoai ?? null, data.dia_chi ?? null, id]
   );
+}
+
+export async function getCustomerLoyalty(customerId: number): Promise<{
+  diem_tich_luy: number;
+  history: { id: number; donhang_id: number; loai: "CONG" | "TRU"; diem: number; lydo: string; created_at: string }[];
+}> {
+  const customer = await queryOne<{ diem_tich_luy: number }>(
+    "SELECT diem_tich_luy FROM khach_hang WHERE id = ?",
+    [customerId]
+  );
+  if (!customer) throw new Error("Khách hàng không tồn tại");
+
+  const history = await query<{
+    id: number;
+    donhang_id: number;
+    loai: "CONG" | "TRU";
+    diem: number;
+    lydo: string;
+    created_at: string;
+  }>(
+    `SELECT id, donhang_id, loai, diem, lydo, created_at
+     FROM lichsu_diem_tich_luy
+     WHERE khach_hang_id = ?
+     ORDER BY created_at DESC, id DESC`,
+    [customerId]
+  );
+  return { diem_tich_luy: Number(customer.diem_tich_luy), history };
 }
 
 // ========== ĐƠN HÀNG ==========

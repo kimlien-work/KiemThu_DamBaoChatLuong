@@ -186,6 +186,21 @@ INSERT INTO `khach_hang` (`id`, `tendangnhap`, `ten`, `dien_thoai`, `email`, `di
 (4, '1234567890', 'abc', '1234567890', NULL, NULL, '900150983cd24fb0d6963f7d28e17f72', NULL, 0, 1, '2026-04-19 06:31:05'),
 (5, 'user', 'abc', '0123456789', 'abc@abc.com', '///', '900150983cd24fb0d6963f7d28e17f72', NULL, 14400, 1, '2026-04-23 12:04:11');
 
+--
+-- Table structure for table `lichsu_diem_tich_luy`
+--
+
+CREATE TABLE `lichsu_diem_tich_luy` (
+  `id` bigint UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
+  `khach_hang_id` int UNSIGNED NOT NULL,
+  `donhang_id` int UNSIGNED NOT NULL,
+  `loai` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `diem` int UNSIGNED NOT NULL,
+  `lydo` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY `uq_diem_donhang_loai` (`donhang_id`, `loai`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- --------------------------------------------------------
 
 --
@@ -548,20 +563,18 @@ ALTER TABLE `nhan_vien`
   ADD CONSTRAINT `fk_nhanvien_chucvu` FOREIGN KEY (`chucvu_id`) REFERENCES `chuc_vu` (`id`) ON UPDATE CASCADE;
 
 --
+-- Constraints for table `lichsu_diem_tich_luy`
+--
+ALTER TABLE `lichsu_diem_tich_luy`
+  ADD CONSTRAINT `fk_lichsu_diem_khachhang` FOREIGN KEY (`khach_hang_id`) REFERENCES `khach_hang` (`id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_lichsu_diem_donhang` FOREIGN KEY (`donhang_id`) REFERENCES `donhang` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
 -- Constraints for table `tin_tuc`
 --
 ALTER TABLE `tin_tuc`
   ADD CONSTRAINT `fk_tintuc_nhanvien` FOREIGN KEY (`nhan_vien_id`) REFERENCES `nhan_vien` (`id`) ON UPDATE CASCADE;
 -- Triggers (created only after tables and sample rows exist)
-DELIMITER $$
-CREATE TRIGGER `trg_tang_diem_tich_luy` AFTER INSERT ON `donhang` FOR EACH ROW BEGIN
-    UPDATE `khach_hang`
-    SET `diem_tich_luy` = `diem_tich_luy` + (NEW.tongtien / 10000)
-    WHERE `id` = NEW.khach_hang_id;
-END
-$$
-DELIMITER ;
-
 DELIMITER $$
 CREATE TRIGGER `trg_tang_luot_mua` AFTER INSERT ON `donhangct` FOR EACH ROW BEGIN
     UPDATE `mathang`
