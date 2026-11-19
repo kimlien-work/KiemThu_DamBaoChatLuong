@@ -272,13 +272,25 @@ export async function adminDeleteCategory(id: number): Promise<void> {
 }
 
 // ========== ORDERS ==========
-export async function adminGetOrders(): Promise<AdminOrder[]> {
+export async function adminGetOrders(options: {
+  keyword?: string;
+  includeSensitive?: boolean;
+} = {}): Promise<AdminOrder[]> {
+  const keyword = options.keyword?.trim();
+  const sensitiveFields = options.includeSensitive
+    ? `d.ghichu, k.ten AS tenkhachhang, k.dien_thoai`
+    : `NULL AS ghichu, NULL AS tenkhachhang, NULL AS dien_thoai`;
+  const where = keyword ? "WHERE d.id = ?" : "";
+  const params = keyword ? [Number(keyword)] : [];
+
   return query<AdminOrder>(
-    `SELECT d.id, d.khach_hang_id, d.ngay, d.tongtien, d.ghichu, d.trangthai,
-            k.ten AS tenkhachhang, k.dien_thoai
+    `SELECT d.id, d.khach_hang_id, d.ngay, d.tongtien, d.trangthai,
+            ${sensitiveFields}
      FROM donhang d
      LEFT JOIN khach_hang k ON k.id = d.khach_hang_id
-     ORDER BY d.ngay DESC`
+     ${where}
+     ORDER BY d.ngay DESC`,
+    params
   );
 }
 
@@ -352,10 +364,15 @@ export async function adminUpdateOrderStatus(id: number, trangthai: number): Pro
   }
 }
 
-export async function adminGetOrderDetail(id: number): Promise<AdminOrder | null> {
+export async function adminGetOrderDetail(
+  id: number,
+  includeSensitive = true
+): Promise<AdminOrder | null> {
   const order = await queryOne<AdminOrder>(
-    `SELECT d.id, d.khach_hang_id, d.ngay, d.tongtien, d.ghichu, d.trangthai,
-            k.ten AS tenkhachhang, k.dien_thoai
+    `SELECT d.id, d.khach_hang_id, d.ngay, d.tongtien,
+            ${includeSensitive ? "d.ghichu" : "NULL AS ghichu"},
+            d.trangthai,
+            ${includeSensitive ? "k.ten AS tenkhachhang, k.dien_thoai" : "NULL AS tenkhachhang, NULL AS dien_thoai"}
      FROM donhang d
      LEFT JOIN khach_hang k ON k.id = d.khach_hang_id
      WHERE d.id = ?`,
