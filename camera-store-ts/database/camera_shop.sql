@@ -319,7 +319,6 @@ CREATE TABLE `news` (
 
 CREATE TABLE `nhan_vien` (
   `id` int UNSIGNED NOT NULL PRIMARY KEY,
-  `ma_nhan_vien` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `tendangnhap` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `ten` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `chucvu_id` int UNSIGNED NOT NULL,
@@ -335,10 +334,10 @@ CREATE TABLE `nhan_vien` (
 -- Dumping data for table `nhan_vien`
 --
 
-INSERT INTO `nhan_vien` (`id`, `ma_nhan_vien`, `tendangnhap`, `ten`, `chucvu_id`, `dien_thoai`, `email`, `mat_khau`, `hinhanh`, `trangthai`, `created_at`) VALUES
-(1, 'NV000001', 'abc@abc.com', 'Long Xuyên', 1, '0988994683', 'abc@abc.com', '900150983cd24fb0d6963f7d28e17f72', 'signup.png', 1, '2026-04-19 06:31:05'),
-(2, 'NV000002', 'ghi@abc.com', 'Nhân viên GHI', 2, '0988994685', 'ghi@abc.com', '900150983cd24fb0d6963f7d28e17f72', NULL, 1, '2026-04-19 06:31:05'),
-(3, 'NV000003', 'def@abc.com', 'Mèo máy Doraemon', 2, '11111111', 'def@abc.com', '900150983cd24fb0d6963f7d28e17f72', 'avatar.jpg', 1, '2026-04-19 06:31:05');
+INSERT INTO `nhan_vien` (`id`, `tendangnhap`, `ten`, `chucvu_id`, `dien_thoai`, `email`, `mat_khau`, `hinhanh`, `trangthai`, `created_at`) VALUES
+(1, 'abc@abc.com', 'Long Xuyên', 1, '0988994683', 'abc@abc.com', '900150983cd24fb0d6963f7d28e17f72', 'signup.png', 1, '2026-04-19 06:31:05'),
+(2, 'ghi@abc.com', 'Nhân viên GHI', 2, '0988994685', 'ghi@abc.com', '900150983cd24fb0d6963f7d28e17f72', NULL, 1, '2026-04-19 06:31:05'),
+(3, 'def@abc.com', 'Mèo máy Doraemon', 2, '11111111', 'def@abc.com', '900150983cd24fb0d6963f7d28e17f72', 'avatar.jpg', 1, '2026-04-19 06:31:05');
 
 -- --------------------------------------------------------
 
@@ -435,7 +434,6 @@ ALTER TABLE `mathang` ADD FULLTEXT KEY `ft_search` (`tenmathang`,`mota`);
 -- Indexes for table `nhan_vien`
 --
 ALTER TABLE `nhan_vien`
-  ADD UNIQUE KEY `uk_nv_ma_nhan_vien` (`ma_nhan_vien`),
   ADD UNIQUE KEY `uk_nv_tendangnhap` (`tendangnhap`),
   ADD UNIQUE KEY `uk_nv_dienthoai` (`dien_thoai`),
   ADD UNIQUE KEY `uk_nv_email` (`email`),

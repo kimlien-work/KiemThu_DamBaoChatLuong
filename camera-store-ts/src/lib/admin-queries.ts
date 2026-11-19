@@ -11,11 +11,12 @@ export async function findStaffByLogin(username: string, password: string): Prom
   const hashed = md5(password);
   // Thử MD5 (như PHP) rồi plain text
   const staff = await queryOne<Staff>(
-    `SELECT n.id, n.ma_nhan_vien, n.tendangnhap, n.ten, n.chucvu_id, c.ten AS ten_chuc_vu,
+    `SELECT n.id, CONCAT('NV', LPAD(n.id, 6, '0')) AS ma_nhan_vien,
+            n.tendangnhap, n.ten, n.chucvu_id, c.ten AS ten_chuc_vu,
             n.dien_thoai, n.email, n.hinhanh, n.trangthai
      FROM nhan_vien n
      LEFT JOIN chuc_vu c ON n.chucvu_id = c.id
-     WHERE (n.tendangnhap = ? OR n.ma_nhan_vien = ?)
+     WHERE (n.tendangnhap = ? OR CONCAT('NV', LPAD(n.id, 6, '0')) = ?)
        AND (n.mat_khau = ? OR n.mat_khau = ?) AND n.trangthai = 1`,
     [username, username, hashed, password]
   );
@@ -24,7 +25,8 @@ export async function findStaffByLogin(username: string, password: string): Prom
 
 export async function findStaffById(id: number, activeOnly = true): Promise<Staff | null> {
   return queryOne<Staff>(
-    `SELECT n.id, n.ma_nhan_vien, n.tendangnhap, n.ten, n.chucvu_id, c.ten AS ten_chuc_vu,
+    `SELECT n.id, CONCAT('NV', LPAD(n.id, 6, '0')) AS ma_nhan_vien,
+            n.tendangnhap, n.ten, n.chucvu_id, c.ten AS ten_chuc_vu,
             n.dien_thoai, n.email, n.hinhanh, n.trangthai
      FROM nhan_vien n
      LEFT JOIN chuc_vu c ON n.chucvu_id = c.id
@@ -198,7 +200,8 @@ export async function adminToggleCustomer(id: number, trangthai: number): Promis
 // ========== STAFF ==========
 export async function adminGetStaff(): Promise<Staff[]> {
   return query<Staff>(
-    `SELECT n.id, n.ma_nhan_vien, n.tendangnhap, n.ten, n.chucvu_id, c.ten AS ten_chuc_vu,
+    `SELECT n.id, CONCAT('NV', LPAD(n.id, 6, '0')) AS ma_nhan_vien,
+            n.tendangnhap, n.ten, n.chucvu_id, c.ten AS ten_chuc_vu,
             n.dien_thoai, n.email, n.hinhanh, n.trangthai
      FROM nhan_vien n LEFT JOIN chuc_vu c ON n.chucvu_id = c.id
      ORDER BY n.id DESC`
