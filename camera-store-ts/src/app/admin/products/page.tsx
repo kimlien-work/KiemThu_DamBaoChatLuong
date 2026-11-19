@@ -21,13 +21,80 @@ export default function AdminProductsPage() {
   const [editId, setEditId] = useState<number | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [msg, setMsg] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [categoryId, setCategoryId] = useState(0);
+  const [sort, setSort] = useState("default");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const load = () => {
-    fetch("/api/admin/products").then((r) => r.json()).then((d) => Array.isArray(d) && setProducts(d));
-    fetch("/api/admin/categories").then((r) => r.json()).then((d) => Array.isArray(d) && setCategories(d));
+  const load = async (
+    keyword = searchQuery,
+    selectedCategory = categoryId,
+    selectedSort = sort
+  ) => {
+    setLoading(true);
+    setError("");
+    const params = new URLSearchParams();
+    if (keyword.trim()) params.set("q", keyword.trim());
+    if (selectedCategory > 0) params.set("categoryId", String(selectedCategory));
+    if (selectedSort !== "default") params.set("sort", selectedSort);
+
+    try {
+      const [productsResponse, categoriesResponse] = await Promise.all([
+        fetch(`/api/admin/products${params.size ? `?${params}` : ""}`, { cache: "no-store" }),
+        fetch("/api/admin/categories", { cache: "no-store" }),
+      ]);
+      const [productsData, categoriesData] = await Promise.all([
+        productsResponse.json(),
+        categoriesResponse.json(),
+      ]);
+
+      if (!productsResponse.ok) {
+        throw new Error(productsData.error || "Không thể tải danh sách mặt hàng.");
+      }
+      if (!categoriesResponse.ok) {
+        throw new Error(categoriesData.error || "Không thể tải danh mục.");
+      }
+
+      setProducts(Array.isArray(productsData) ? productsData : []);
+      setCategories(Array.isArray(categoriesData) ? categoriesData : []);
+    } catch (e) {
+      setProducts([]);
+      setError(
+        e instanceof Error
+          ? e.message
+          : "Không thể tải danh sách mặt hàng. Vui lòng thử lại sau."
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { load(); }, []);
+
+  const submitSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const keyword = searchInput.trim();
+    setSearchQuery(keyword);
+    load(keyword, categoryId, sort);
+  };
+
+  const clearSearch = () => {
+    setSearchInput("");
+    setSearchQuery("");
+    load("", categoryId, sort);
+  };
+
+  const changeCategory = (value: number) => {
+    setCategoryId(value);
+    load(searchQuery, value, sort);
+  };
+
+  const changeSort = (value: string) => {
+    setSort(value);
+    load(searchQuery, categoryId, value);
+  };
 
   const openAdd = () => {
     setEditId(null);
@@ -86,6 +153,59 @@ export default function AdminProductsPage() {
       </div>
       {msg && <p className="mb-3 text-sm text-green-600">{msg}</p>}
 
+      <form onSubmit={submitSearch} className="bg-white border rounded-xl p-4 mb-6 shadow-sm">
+        <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_220px_220px_auto] gap-3">
+          <input
+            type="search"
+            className="w-full border rounded-lg px-3 py-2"
+            placeholder="Tìm kiếm mặt hàng theo tên..."
+            value={searchInput}
+            onChange={(e) => {
+              setSearchInput(e.target.value);
+              if (!e.target.value) {
+                setSearchQuery("");
+                load("", categoryId, sort);
+              }
+            }}
+          />
+          <select
+            className="w-full border rounded-lg px-3 py-2"
+            value={categoryId}
+            onChange={(e) => changeCategory(Number(e.target.value))}
+            aria-label="Lọc theo danh mục"
+          >
+            <option value={0}>Tất cả danh mục</option>
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>{category.tendanhmuc}</option>
+            ))}
+          </select>
+          <select
+            className="w-full border rounded-lg px-3 py-2"
+            value={sort}
+            onChange={(e) => changeSort(e.target.value)}
+            aria-label="Sắp xếp mặt hàng"
+          >
+            <option value="default">Mặc định</option>
+            <option value="name_asc">Tên: A → Z</option>
+            <option value="name_desc">Tên: Z → A</option>
+            <option value="price_asc">Giá: thấp → cao</option>
+            <option value="price_desc">Giá: cao → thấp</option>
+            <option value="newest">Mới nhất</option>
+            <option value="oldest">Cũ nhất</option>
+          </select>
+          <div className="flex gap-2">
+            {searchInput && (
+              <button type="button" onClick={clearSearch} className="border px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-50">
+                Xóa
+              </button>
+            )}
+            <button type="submit" className="border border-cyan-600 text-cyan-700 px-4 py-2 rounded-lg hover:bg-cyan-50">
+              Tìm kiếm
+            </button>
+          </div>
+        </div>
+      </form>
+
       {showForm && (
         <form onSubmit={save} className="bg-white border rounded-xl p-5 mb-6 shadow-sm space-y-3">
           <h2 className="font-bold text-lg">{editId ? "Sửa sản phẩm" : "Thêm sản phẩm"}</h2>
@@ -138,6 +258,26 @@ export default function AdminProductsPage() {
         </form>
       )}
 
+      {loading && (
+        <div className="bg-white border rounded-xl p-8 text-center text-slate-500 shadow-sm">
+          Đang tải danh sách mặt hàng...
+        </div>
+      )}
+
+      {!loading && error && (
+        <div className="bg-red-50 border border-red-100 rounded-xl p-6 text-center shadow-sm">
+          <p className="text-red-700 mb-3">Không thể tải danh sách mặt hàng. Vui lòng thử lại sau.</p>
+          <button
+            type="button"
+            onClick={() => load(searchQuery, categoryId, sort)}
+            className="border border-red-300 text-red-700 px-4 py-2 rounded-lg hover:bg-red-100"
+          >
+            Thử lại
+          </button>
+        </div>
+      )}
+
+      {!loading && !error && (
       <div className="bg-white border rounded-xl shadow-sm overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-left">
@@ -153,6 +293,13 @@ export default function AdminProductsPage() {
             </tr>
           </thead>
           <tbody>
+            {products.length === 0 && (
+              <tr>
+                <td colSpan={8} className="p-6 text-center text-slate-500">
+                  Không tìm thấy mặt hàng phù hợp.
+                </td>
+              </tr>
+            )}
             {products.map((p) => (
               <tr key={p.id} className="border-t">
                 <td className="p-3">{p.id}</td>
@@ -177,6 +324,7 @@ export default function AdminProductsPage() {
           </tbody>
         </table>
       </div>
+      )}
     </div>
   );
 }

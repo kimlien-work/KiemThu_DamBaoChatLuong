@@ -62,10 +62,41 @@ export async function getAdminStats(from?: string, to?: string) {
 }
 
 // ========== PRODUCTS (all, including hidden) ==========
-export async function adminGetProducts(): Promise<Product[]> {
+export async function adminGetProducts(options: {
+  keyword?: string;
+  categoryId?: number;
+  sort?: string;
+} = {}): Promise<Product[]> {
+  const conditions: string[] = [];
+  const params: unknown[] = [];
+  const keyword = options.keyword?.trim();
+
+  if (keyword) {
+    conditions.push("tenmathang LIKE ?");
+    params.push(`%${keyword}%`);
+  }
+  if (options.categoryId && options.categoryId > 0) {
+    conditions.push("danhmuc_id = ?");
+    params.push(options.categoryId);
+  }
+
+  const orderBy: Record<string, string> = {
+    name_asc: "tenmathang ASC, id ASC",
+    name_desc: "tenmathang DESC, id DESC",
+    price_asc: "giaban ASC, id ASC",
+    price_desc: "giaban DESC, id DESC",
+    newest: "created_at DESC, id DESC",
+    oldest: "created_at ASC, id ASC",
+  };
+  const sort = options.sort && orderBy[options.sort]
+    ? orderBy[options.sort]
+    : "id DESC";
+
+  const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
   return query<Product>(
     `SELECT id, tenmathang, mota, giagoc, giaban, soluongton, hinhanh, danhmuc_id, luotxem, luotmua, trangthai
-     FROM mathang ORDER BY id DESC`
+     FROM mathang ${where} ORDER BY ${sort}`,
+    params
   );
 }
 

@@ -6,11 +6,24 @@ import {
   adminDeleteProduct,
 } from "@/lib/admin-queries";
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    return NextResponse.json(await adminGetProducts());
+    const searchParams = new URL(req.url).searchParams;
+    const keyword = searchParams.get("q")?.trim();
+    const categoryId = Number(searchParams.get("categoryId")) || undefined;
+    const sort = searchParams.get("sort")?.trim();
+
+    return NextResponse.json(await adminGetProducts({
+      keyword: keyword || undefined,
+      categoryId,
+      sort: sort || undefined,
+    }));
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 });
+    console.error("[admin/products]", e);
+    return NextResponse.json(
+      { error: "Không thể tải danh sách mặt hàng. Vui lòng thử lại sau." },
+      { status: 500 }
+    );
   }
 }
 
