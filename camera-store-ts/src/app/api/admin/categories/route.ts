@@ -6,9 +6,10 @@ import {
   adminDeleteCategory,
 } from "@/lib/admin-queries";
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    return NextResponse.json(await getCategories());
+    const keyword = new URL(req.url).searchParams.get("q")?.trim();
+    return NextResponse.json(await getCategories(keyword || undefined));
   } catch (e) {
     return NextResponse.json({ error: String(e) }, { status: 500 });
   }

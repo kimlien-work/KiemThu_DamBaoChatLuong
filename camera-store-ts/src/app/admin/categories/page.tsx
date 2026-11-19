@@ -8,11 +8,30 @@ export default function AdminCategoriesPage() {
   const [name, setName] = useState("");
   const [editId, setEditId] = useState<number | null>(null);
   const [editName, setEditName] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const load = () => {
-    fetch("/api/admin/categories").then((r) => r.json()).then((d) => Array.isArray(d) && setList(d));
+  const load = (keyword = "") => {
+    const query = keyword.trim();
+    const url = query
+      ? `/api/admin/categories?q=${encodeURIComponent(query)}`
+      : "/api/admin/categories";
+    fetch(url).then((r) => r.json()).then((d) => Array.isArray(d) && setList(d));
   };
   useEffect(() => { load(); }, []);
+
+  const search = (e: React.FormEvent) => {
+    e.preventDefault();
+    const keyword = searchInput.trim();
+    setSearchQuery(keyword);
+    load(keyword);
+  };
+
+  const clearSearch = () => {
+    setSearchInput("");
+    setSearchQuery("");
+    load();
+  };
 
   const add = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,7 +42,7 @@ export default function AdminCategoriesPage() {
       body: JSON.stringify({ tendanhmuc: name }),
     });
     setName("");
-    load();
+    load(searchQuery);
   };
 
   const saveEdit = async (id: number) => {
@@ -33,13 +52,13 @@ export default function AdminCategoriesPage() {
       body: JSON.stringify({ id, tendanhmuc: editName }),
     });
     setEditId(null);
-    load();
+    load(searchQuery);
   };
 
   const remove = async (id: number) => {
     if (!confirm("Xóa danh mục này?")) return;
     await fetch(`/api/admin/categories?id=${id}`, { method: "DELETE" });
-    load();
+    load(searchQuery);
   };
 
   return (
@@ -55,6 +74,29 @@ export default function AdminCategoriesPage() {
         />
         <button type="submit" className="bg-cyan-600 text-white px-5 py-2 rounded-lg">Thêm</button>
       </form>
+      <form onSubmit={search} className="flex gap-2 mb-4">
+        <input
+          type="search"
+          className="flex-1 border rounded-lg px-3 py-2"
+          placeholder="Tìm kiếm danh mục theo tên..."
+          value={searchInput}
+          onChange={(e) => {
+            setSearchInput(e.target.value);
+            if (!e.target.value) {
+              setSearchQuery("");
+              load();
+            }
+          }}
+        />
+        {searchInput && (
+          <button type="button" onClick={clearSearch} className="border px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-50">
+            Xóa
+          </button>
+        )}
+        <button type="submit" className="border border-cyan-600 text-cyan-700 px-5 py-2 rounded-lg hover:bg-cyan-50">
+          Tìm kiếm
+        </button>
+      </form>
       <div className="bg-white border rounded-xl shadow-sm overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-left">
@@ -65,6 +107,13 @@ export default function AdminCategoriesPage() {
             </tr>
           </thead>
           <tbody>
+            {list.length === 0 && (
+              <tr>
+                <td colSpan={3} className="p-6 text-center text-slate-500">
+                  Không tìm thấy danh mục phù hợp.
+                </td>
+              </tr>
+            )}
             {list.map((c) => (
               <tr key={c.id} className="border-t">
                 <td className="p-3">{c.id}</td>

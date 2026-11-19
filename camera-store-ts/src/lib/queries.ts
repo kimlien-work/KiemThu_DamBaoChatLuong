@@ -2,7 +2,18 @@ import { query, queryOne, getPool } from "./db";
 import type { Category, Product, Customer, News, Order, OrderItem } from "@/types";
 
 // ========== DANH MỤC ==========
-export async function getCategories(): Promise<Category[]> {
+export async function getCategories(keyword?: string): Promise<Category[]> {
+  const text = keyword?.trim();
+  if (text) {
+    return query<Category>(
+      `SELECT id, tendanhmuc
+       FROM danhmuc
+       WHERE tendanhmuc LIKE ?
+       ORDER BY CASE WHEN tendanhmuc = 'Khác' THEN 1 ELSE 0 END, tendanhmuc`,
+      [`%${text}%`]
+    );
+  }
+
   return query<Category>(
     "SELECT id, tendanhmuc FROM danhmuc ORDER BY CASE WHEN tendanhmuc = 'Khác' THEN 1 ELSE 0 END, tendanhmuc"
   );
