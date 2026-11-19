@@ -209,6 +209,7 @@ CREATE TABLE `lichsu_diem_tich_luy` (
 
 CREATE TABLE `mathang` (
   `id` int UNSIGNED NOT NULL PRIMARY KEY,
+  `ma_mat_hang` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `tenmathang` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `mota` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `giagoc` decimal(15,0) NOT NULL DEFAULT '0',
@@ -308,6 +309,13 @@ INSERT INTO `mathang` (`id`, `tenmathang`, `mota`, `giagoc`, `giaban`, `soluongt
 (78, 'Sony Nex 5T + Kit 16-50 OSS', '<p>Tình trạng: 99%. Tính năng nổi bật Sony NEX 5T &amp; Kit 16-50 OSS.</p>', 6500000, 6500000, 10, 'images/products/sony/sony (14).jpg', 3, 1, 7, 1, '2026-04-19 06:31:05', '2026-04-23 16:16:31'),
 (79, 'Sony RX100 mark IV', '<p>Tình trạng: 99%. Cảm biến Exmor RS CMOS 20.1MP.</p>', 10000000, 10000000, 3, 'images/products/sony/sony (15).jpg', 3, 1, 8, 1, '2026-04-19 06:31:05', '2026-04-23 16:02:14'),
 (80, 'SONY ZV-E10 KÈM 16-50', 'Tình trạng: 99%. Cảm biến CMOS APS-C Exmor 24.2MP.', 14800000, 14800000, 6, 'images/products/sony/sony (16).jpg', 3, 0, 0, 1, '2026-04-19 06:31:05', NULL);
+
+UPDATE `mathang`
+SET `ma_mat_hang` = CONCAT('MH', LPAD(`id`, 6, '0'))
+WHERE `ma_mat_hang` IS NULL OR `ma_mat_hang` = '';
+
+ALTER TABLE `mathang`
+  MODIFY `ma_mat_hang` varchar(30) NOT NULL;
 
 -- --------------------------------------------------------
 
@@ -434,6 +442,7 @@ ALTER TABLE `khach_hang`
 -- Indexes for table `mathang`
 --
 ALTER TABLE `mathang`
+  ADD UNIQUE KEY `uk_ma_mat_hang` (`ma_mat_hang`),
   ADD KEY `idx_danhmuc` (`danhmuc_id`),
   ADD KEY `idx_giaban` (`giaban`),
   ADD KEY `idx_luotmua` (`luotmua`),

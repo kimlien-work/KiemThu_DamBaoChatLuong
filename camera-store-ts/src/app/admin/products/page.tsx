@@ -5,6 +5,7 @@ import type { Product, Category } from "@/types";
 import { formatPrice, imageUrl } from "@/lib/utils";
 
 const empty = {
+  ma_mat_hang: "",
   tenmathang: "",
   mota: "",
   giagoc: 0,
@@ -112,6 +113,7 @@ export default function AdminProductsPage() {
   const openEdit = (p: Product) => {
     setEditId(p.id);
     setForm({
+      ma_mat_hang: p.ma_mat_hang || "",
       tenmathang: p.tenmathang,
       mota: p.mota || "",
       giagoc: Number(p.giagoc),
@@ -288,6 +290,15 @@ export default function AdminProductsPage() {
           <h2 className="font-bold text-lg">{editId ? "Sửa sản phẩm" : "Thêm sản phẩm"}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
+              <label className="text-sm font-medium">Mã mặt hàng</label>
+              <input
+                className="w-full border rounded px-3 py-2"
+                value={form.ma_mat_hang}
+                onChange={(e) => setForm({ ...form, ma_mat_hang: e.target.value.toUpperCase() })}
+                placeholder={editId ? undefined : "Để trống để tự sinh mã"}
+              />
+            </div>
+            <div>
               <label className="text-sm font-medium">Tên sản phẩm</label>
               <input required className="w-full border rounded px-3 py-2" value={form.tenmathang}
                 onChange={(e) => setForm({ ...form, tenmathang: e.target.value })} />
@@ -404,6 +415,7 @@ export default function AdminProductsPage() {
           <thead className="bg-slate-50 text-left">
             <tr>
               <th className="p-3">ID</th>
+              <th className="p-3">Mã mặt hàng</th>
               <th className="p-3">Ảnh</th>
               <th className="p-3">Tên</th>
               <th className="p-3">Danh mục</th>
@@ -416,7 +428,7 @@ export default function AdminProductsPage() {
           <tbody>
             {products.length === 0 && (
               <tr>
-                <td colSpan={8} className="p-6 text-center text-slate-500">
+                <td colSpan={9} className="p-6 text-center text-slate-500">
                   Không tìm thấy mặt hàng phù hợp.
                 </td>
               </tr>
@@ -424,6 +436,7 @@ export default function AdminProductsPage() {
             {products.map((p) => (
               <tr key={p.id} className="border-t">
                 <td className="p-3">{p.id}</td>
+                <td className="p-3 font-medium">{p.ma_mat_hang || `MH${String(p.id).padStart(6, "0")}`}</td>
                 <td className="p-3">
                   <img src={imageUrl(p.hinhanh)} alt="" className="w-12 h-12 object-contain" />
                 </td>

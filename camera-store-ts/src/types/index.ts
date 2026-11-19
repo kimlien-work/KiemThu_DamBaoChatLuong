@@ -5,6 +5,7 @@ export interface Category {
 
 export interface Product {
   id: number;
+  ma_mat_hang?: string;
   tenmathang: string;
   mota: string | null;
   giagoc: number;

@@ -1,4 +1,4 @@
-import { createHash } from "crypto";
+import { createHash, randomUUID } from "crypto";
 import { query, queryOne, getPool } from "./db";
 import type { Product, Customer, News, Staff, AdminOrder, OrderItem } from "@/types";
 import { calculateLoyaltyPoints } from "./loyalty";
@@ -72,8 +72,8 @@ export async function adminGetProducts(options: {
   const keyword = options.keyword?.trim();
 
   if (keyword) {
-    conditions.push("tenmathang LIKE ?");
-    params.push(`%${keyword}%`);
+    conditions.push("(tenmathang LIKE ? OR ma_mat_hang LIKE ?)");
+    params.push(`%${keyword}%`, `%${keyword}%`);
   }
   if (options.categoryId && options.categoryId > 0) {
     conditions.push("danhmuc_id = ?");
@@ -94,13 +94,14 @@ export async function adminGetProducts(options: {
 
   const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
   return query<Product>(
-    `SELECT id, tenmathang, mota, giagoc, giaban, soluongton, hinhanh, danhmuc_id, luotxem, luotmua, trangthai
+    `SELECT id, ma_mat_hang, tenmathang, mota, giagoc, giaban, soluongton, hinhanh, danhmuc_id, luotxem, luotmua, trangthai
      FROM mathang ${where} ORDER BY ${sort}`,
     params
   );
 }
 
 export async function adminCreateProduct(data: {
+  ma_mat_hang?: string;
   tenmathang: string;
   mota?: string;
   giagoc: number;
@@ -110,25 +111,66 @@ export async function adminCreateProduct(data: {
   danhmuc_id: number;
 }): Promise<number> {
   const pool = getPool();
-  const [result] = await pool.execute(
-    `INSERT INTO mathang (tenmathang, mota, giagoc, giaban, soluongton, hinhanh, danhmuc_id, trangthai)
-     VALUES (?, ?, ?, ?, ?, ?, ?, 1)`,
-    [
-      data.tenmathang,
-      data.mota || null,
-      data.giagoc,
-      data.giaban,
-      data.soluongton,
-      data.hinhanh || null,
-      data.danhmuc_id,
-    ]
-  );
-  return (result as { insertId: number }).insertId;
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+
+    const [categories] = await conn.execute(
+      "SELECT id FROM danhmuc WHERE id = ? FOR UPDATE",
+      [data.danhmuc_id]
+    );
+    if ((categories as { id: number }[]).length === 0) {
+      throw new Error("Danh mục không tồn tại hoặc không còn hợp lệ.");
+    }
+
+    let code = data.ma_mat_hang?.trim();
+    if (code) {
+      code = code.toUpperCase();
+      const [duplicates] = await conn.execute(
+        "SELECT id FROM mathang WHERE ma_mat_hang = ? LIMIT 1",
+        [code]
+      );
+      if ((duplicates as { id: number }[]).length > 0) {
+        throw new Error("Mã mặt hàng đã tồn tại. Vui lòng sử dụng mã khác.");
+      }
+    }
+
+    const tempCode = `TMP-${randomUUID()}`;
+    const [result] = await conn.execute(
+      `INSERT INTO mathang (ma_mat_hang, tenmathang, mota, giagoc, giaban, soluongton, hinhanh, danhmuc_id, trangthai)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)`,
+      [
+        tempCode,
+        data.tenmathang,
+        data.mota || null,
+        data.giagoc,
+        data.giaban,
+        data.soluongton,
+        data.hinhanh || null,
+        data.danhmuc_id,
+      ]
+    );
+    const productId = (result as { insertId: number }).insertId;
+    const finalCode = code || `MH${String(productId).padStart(6, "0")}`;
+    await conn.execute(
+      "UPDATE mathang SET ma_mat_hang = ? WHERE id = ?",
+      [finalCode, productId]
+    );
+
+    await conn.commit();
+    return productId;
+  } catch (e) {
+    await conn.rollback();
+    throw e;
+  } finally {
+    conn.release();
+  }
 }
 
 export async function adminUpdateProduct(
   id: number,
   data: Partial<{
+    ma_mat_hang: string;
     tenmathang: string;
     mota: string;
     giagoc: number;
@@ -139,29 +181,74 @@ export async function adminUpdateProduct(
     trangthai: number;
   }>
 ): Promise<void> {
-  await query(
-    `UPDATE mathang SET
-      tenmathang = COALESCE(?, tenmathang),
-      mota = COALESCE(?, mota),
-      giagoc = COALESCE(?, giagoc),
-      giaban = COALESCE(?, giaban),
-      soluongton = COALESCE(?, soluongton),
-      hinhanh = COALESCE(?, hinhanh),
-      danhmuc_id = COALESCE(?, danhmuc_id),
-      trangthai = COALESCE(?, trangthai)
-     WHERE id = ?`,
-    [
-      data.tenmathang ?? null,
-      data.mota ?? null,
-      data.giagoc ?? null,
-      data.giaban ?? null,
-      data.soluongton ?? null,
-      data.hinhanh ?? null,
-      data.danhmuc_id ?? null,
-      data.trangthai ?? null,
-      id,
-    ]
-  );
+  const pool = getPool();
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+
+    const [products] = await conn.execute(
+      "SELECT id FROM mathang WHERE id = ? FOR UPDATE",
+      [id]
+    );
+    if ((products as { id: number }[]).length === 0) {
+      throw new Error("Mặt hàng không tồn tại.");
+    }
+
+    if (data.danhmuc_id !== undefined) {
+      const [categories] = await conn.execute(
+        "SELECT id FROM danhmuc WHERE id = ? FOR UPDATE",
+        [data.danhmuc_id]
+      );
+      if ((categories as { id: number }[]).length === 0) {
+        throw new Error("Danh mục không tồn tại hoặc không còn hợp lệ.");
+      }
+    }
+
+    if (data.ma_mat_hang !== undefined) {
+      const code = data.ma_mat_hang.trim().toUpperCase();
+      if (!code) throw new Error("Mã mặt hàng không được để trống.");
+      const [duplicates] = await conn.execute(
+        "SELECT id FROM mathang WHERE ma_mat_hang = ? AND id <> ? LIMIT 1",
+        [code, id]
+      );
+      if ((duplicates as { id: number }[]).length > 0) {
+        throw new Error("Mã mặt hàng đã tồn tại. Vui lòng sử dụng mã khác.");
+      }
+      data.ma_mat_hang = code;
+    }
+
+    await conn.execute(
+      `UPDATE mathang SET
+        ma_mat_hang = COALESCE(?, ma_mat_hang),
+        tenmathang = COALESCE(?, tenmathang),
+        mota = COALESCE(?, mota),
+        giagoc = COALESCE(?, giagoc),
+        giaban = COALESCE(?, giaban),
+        soluongton = COALESCE(?, soluongton),
+        hinhanh = COALESCE(?, hinhanh),
+        danhmuc_id = COALESCE(?, danhmuc_id),
+        trangthai = COALESCE(?, trangthai)
+       WHERE id = ?`,
+      [
+        data.ma_mat_hang ?? null,
+        data.tenmathang ?? null,
+        data.mota ?? null,
+        data.giagoc ?? null,
+        data.giaban ?? null,
+        data.soluongton ?? null,
+        data.hinhanh ?? null,
+        data.danhmuc_id ?? null,
+        data.trangthai ?? null,
+        id,
+      ]
+    );
+    await conn.commit();
+  } catch (e) {
+    await conn.rollback();
+    throw e;
+  } finally {
+    conn.release();
+  }
 }
 
 export async function adminDeleteProduct(id: number): Promise<void> {
