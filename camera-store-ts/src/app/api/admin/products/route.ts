@@ -5,9 +5,12 @@ import {
   adminUpdateProduct,
   adminDeleteProduct,
 } from "@/lib/admin-queries";
+import { getAdminSession } from "@/lib/admin-session";
 
 export async function GET(req: Request) {
   try {
+    const admin = await getAdminSession(req);
+    if (!admin) return NextResponse.json({ error: "Chưa đăng nhập hoặc phiên đã hết hạn." }, { status: 401 });
     const searchParams = new URL(req.url).searchParams;
     const keyword = searchParams.get("q")?.trim();
     const categoryId = Number(searchParams.get("categoryId")) || undefined;
@@ -29,6 +32,8 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
+    const admin = await getAdminSession(req);
+    if (!admin) return NextResponse.json({ error: "Chưa đăng nhập hoặc phiên đã hết hạn." }, { status: 401 });
     const body = await req.json();
     const id = await adminCreateProduct(body);
     return NextResponse.json({ id });
@@ -39,6 +44,8 @@ export async function POST(req: Request) {
 
 export async function PUT(req: Request) {
   try {
+    const admin = await getAdminSession(req);
+    if (!admin) return NextResponse.json({ error: "Chưa đăng nhập hoặc phiên đã hết hạn." }, { status: 401 });
     const body = await req.json();
     const { id, ...data } = body;
     await adminUpdateProduct(Number(id), data);
@@ -50,6 +57,8 @@ export async function PUT(req: Request) {
 
 export async function DELETE(req: Request) {
   try {
+    const admin = await getAdminSession(req);
+    if (!admin) return NextResponse.json({ error: "Chưa đăng nhập hoặc phiên đã hết hạn." }, { status: 401 });
     const { searchParams } = new URL(req.url);
     const id = Number(searchParams.get("id"));
     await adminDeleteProduct(id);
