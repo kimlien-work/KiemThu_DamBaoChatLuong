@@ -10,6 +10,10 @@ export default function AdminNewsPage() {
   const [form, setForm] = useState(empty);
   const [editId, setEditId] = useState<number | null>(null);
   const [show, setShow] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [editVersion, setEditVersion] = useState<number | undefined>();
 
   const load = () => {
     fetch("/api/admin/news").then((r) => r.json()).then((d) => Array.isArray(d) && setList(d));
@@ -19,16 +23,52 @@ export default function AdminNewsPage() {
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     const method = editId ? "PUT" : "POST";
-    const body = editId ? { id: editId, ...form } : form;
-    await fetch("/api/admin/news", {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    setShow(false);
-    setEditId(null);
-    setForm(empty);
-    load();
+    await submitSave(method, false);
+  };
+
+  const submitSave = async (method: "POST" | "PUT", force: boolean) => {
+    setSaving(true);
+    setMessage("");
+    setError("");
+    const body = editId
+      ? { id: editId, version: editVersion, force, ...form }
+      : form;
+
+    try {
+      const res = await fetch("/api/admin/news", {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+
+      if (res.status === 409) {
+        const shouldOverwrite = window.confirm(
+          "Bài viết đã được Admin khác cập nhật. Bạn có muốn ghi đè bằng nội dung hiện tại?"
+        );
+        if (shouldOverwrite) {
+          await submitSave("PUT", true);
+        } else {
+          setError("Nội dung chưa được lưu do bài viết đã có thay đổi mới.");
+        }
+        return;
+      }
+      if (!res.ok) {
+        setError(data.error || "Không thể lưu thay đổi.");
+        return;
+      }
+
+      setMessage(editId ? "Đã cập nhật bài viết" : "Đã thêm bài viết");
+      setShow(false);
+      setEditId(null);
+      setEditVersion(undefined);
+      setForm(empty);
+      load();
+    } catch {
+      setError("Không thể lưu thay đổi. Vui lòng kiểm tra kết nối và thử lại.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const remove = async (id: number) => {
@@ -42,12 +82,22 @@ export default function AdminNewsPage() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-slate-800">Quản lý tin tức</h1>
         <button
-          onClick={() => { setEditId(null); setForm(empty); setShow(true); }}
+          onClick={() => {
+            setEditId(null);
+            setEditVersion(undefined);
+            setForm(empty);
+            setMessage("");
+            setError("");
+            setShow(true);
+          }}
           className="bg-cyan-600 text-white px-4 py-2 rounded-lg"
         >
           + Thêm bài viết
         </button>
       </div>
+
+      {message && <p className="mb-3 text-sm text-green-600">{message}</p>}
+      {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
 
       {show && (
         <form onSubmit={save} className="bg-white border rounded-xl p-5 mb-6 space-y-3 shadow-sm">
@@ -60,8 +110,10 @@ export default function AdminNewsPage() {
           <input className="w-full border rounded px-3 py-2" placeholder="URL ảnh"
             value={form.hinhanh} onChange={(e) => setForm({ ...form, hinhanh: e.target.value })} />
           <div className="flex gap-2">
-            <button type="submit" className="bg-cyan-600 text-white px-5 py-2 rounded-lg">Lưu</button>
-            <button type="button" onClick={() => setShow(false)} className="border px-5 py-2 rounded-lg">Hủy</button>
+            <button type="submit" disabled={saving} className="bg-cyan-600 text-white px-5 py-2 rounded-lg disabled:opacity-50">
+              {saving ? "Đang lưu..." : "Lưu"}
+            </button>
+            <button type="button" onClick={() => { setShow(false); setError(""); }} className="border px-5 py-2 rounded-lg">Hủy</button>
           </div>
         </form>
       )}
@@ -88,6 +140,9 @@ export default function AdminNewsPage() {
                   <button
                     onClick={() => {
                       setEditId(n.id);
+                      setEditVersion(n.version);
+                      setMessage("");
+                      setError("");
                       setForm({
                         tieude: n.tieude,
                         tomtat: n.tomtat || "",

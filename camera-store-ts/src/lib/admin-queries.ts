@@ -2,6 +2,7 @@ import { createHash, randomUUID } from "crypto";
 import { query, queryOne, getPool } from "./db";
 import type { Product, Customer, News, Staff, AdminOrder, OrderItem } from "@/types";
 import { calculateLoyaltyPoints } from "./loyalty";
+import { normalizeNewsTitle, stripHtml } from "./textSanitize";
 
 export function md5(text: string): string {
   return createHash("md5").update(text).digest("hex");
@@ -421,7 +422,7 @@ export async function adminUpdateStaffProfile(
 // ========== NEWS ==========
 export async function adminGetNews(): Promise<News[]> {
   return query<News>(
-    `SELECT id, tieude, tomtat, noidung, hinhanh, ngaydang, luotxem, trangthai
+    `SELECT id, tieude, tomtat, noidung, hinhanh, ngaydang, luotxem, trangthai, updated_at, version
      FROM tin_tuc ORDER BY ngaydang DESC`
   );
 }
@@ -433,27 +434,108 @@ export async function adminCreateNews(data: {
   hinhanh?: string;
 }): Promise<number> {
   const pool = getPool();
-  const [result] = await pool.execute(
-    `INSERT INTO tin_tuc (tieude, tomtat, noidung, hinhanh, trangthai) VALUES (?, ?, ?, ?, 1)`,
-    [data.tieude, data.tomtat || null, data.noidung || null, data.hinhanh || null]
-  );
-  return (result as { insertId: number }).insertId;
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+    const title = normalizeNewsTitle(data.tieude);
+    if (!title) throw new Error("Tiêu đề bài viết không được để trống.");
+
+    const [duplicates] = await conn.execute(
+      "SELECT id FROM tin_tuc WHERE LOWER(TRIM(tieude)) = LOWER(TRIM(?)) LIMIT 1",
+      [title]
+    );
+    if ((duplicates as { id: number }[]).length > 0) {
+      throw new Error("Tiêu đề bài viết đã tồn tại. Vui lòng sử dụng tiêu đề khác.");
+    }
+
+    const [result] = await conn.execute(
+      `INSERT INTO tin_tuc
+       (tieude, tomtat, noidung, hinhanh, trangthai, version)
+       VALUES (?, ?, ?, ?, 1, 1)`,
+      [
+        title,
+        data.tomtat ? stripHtml(data.tomtat) : null,
+        data.noidung ? stripHtml(data.noidung) : null,
+        data.hinhanh || null,
+      ]
+    );
+    await conn.commit();
+    return (result as { insertId: number }).insertId;
+  } catch (e) {
+    await conn.rollback();
+    throw e;
+  } finally {
+    conn.release();
+  }
 }
 
 export async function adminUpdateNews(
   id: number,
-  data: Partial<{ tieude: string; tomtat: string; noidung: string; hinhanh: string; trangthai: number }>
+  data: Partial<{ tieude: string; tomtat: string; noidung: string; hinhanh: string; trangthai: number }>,
+  expectedVersion?: number,
+  force = false
 ): Promise<void> {
-  await query(
-    `UPDATE tin_tuc SET
-      tieude = COALESCE(?, tieude),
-      tomtat = COALESCE(?, tomtat),
-      noidung = COALESCE(?, noidung),
-      hinhanh = COALESCE(?, hinhanh),
-      trangthai = COALESCE(?, trangthai)
-     WHERE id = ?`,
-    [data.tieude ?? null, data.tomtat ?? null, data.noidung ?? null, data.hinhanh ?? null, data.trangthai ?? null, id]
-  );
+  const pool = getPool();
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+    const [rows] = await conn.execute(
+      "SELECT id, version FROM tin_tuc WHERE id = ? FOR UPDATE",
+      [id]
+    );
+    const newsRows = rows as { id: number; version: number }[];
+    if (newsRows.length === 0) throw new Error("Bài viết không tồn tại.");
+
+    const current = newsRows[0];
+    if (
+      !force &&
+      expectedVersion !== undefined &&
+      Number(current.version) !== Number(expectedVersion)
+    ) {
+      const conflict = new Error("Bài viết đã được cập nhật bởi Admin khác.");
+      (conflict as Error & { status?: number }).status = 409;
+      throw conflict;
+    }
+
+    let title: string | null = null;
+    if (data.tieude !== undefined) {
+      title = normalizeNewsTitle(data.tieude);
+      if (!title) throw new Error("Tiêu đề bài viết không được để trống.");
+
+      const [duplicates] = await conn.execute(
+        "SELECT id FROM tin_tuc WHERE LOWER(TRIM(tieude)) = LOWER(TRIM(?)) AND id <> ? LIMIT 1",
+        [title, id]
+      );
+      if ((duplicates as { id: number }[]).length > 0) {
+        throw new Error("Tiêu đề bài viết đã tồn tại. Vui lòng sử dụng tiêu đề khác.");
+      }
+    }
+
+    await conn.execute(
+      `UPDATE tin_tuc SET
+        tieude = COALESCE(?, tieude),
+        tomtat = COALESCE(?, tomtat),
+        noidung = COALESCE(?, noidung),
+        hinhanh = COALESCE(?, hinhanh),
+        trangthai = COALESCE(?, trangthai),
+        version = version + 1
+       WHERE id = ?`,
+      [
+        title,
+        data.tomtat !== undefined ? stripHtml(data.tomtat) : null,
+        data.noidung !== undefined ? stripHtml(data.noidung) : null,
+        data.hinhanh ?? null,
+        data.trangthai ?? null,
+        id,
+      ]
+    );
+    await conn.commit();
+  } catch (e) {
+    await conn.rollback();
+    throw e;
+  } finally {
+    conn.release();
+  }
 }
 
 export async function adminDeleteNews(id: number): Promise<void> {

@@ -39,6 +39,8 @@ export interface News {
   ngaydang: string | null;
   luotxem: number;
   trangthai: number;
+  updated_at?: string | null;
+  version?: number;
 }
 
 export interface Staff {

@@ -380,7 +380,10 @@ CREATE TABLE `tin_tuc` (
   `luotxem` int UNSIGNED NOT NULL DEFAULT '0',
   `trangthai` tinyint UNSIGNED NOT NULL DEFAULT '1',
   `ngay_dang` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
+  `updated_at` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  `version` int UNSIGNED NOT NULL DEFAULT '1',
+  `tieude_key` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+    GENERATED ALWAYS AS (LOWER(TRIM(`tieude`))) STORED
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -467,6 +470,7 @@ ALTER TABLE `nhan_vien`
 -- Indexes for table `tin_tuc`
 --
 ALTER TABLE `tin_tuc`
+  ADD UNIQUE KEY `uk_tintuc_tieude_key` (`tieude_key`),
   ADD KEY `idx_trangthai` (`trangthai`),
   ADD KEY `idx_ngaydang` (`ngay_dang`),
   ADD KEY `fk_tintuc_nhanvien` (`nhan_vien_id`);
