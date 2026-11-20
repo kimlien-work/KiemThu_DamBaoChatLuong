@@ -406,10 +406,36 @@ export async function adminGetOrderDetail(
 }
 
 // ========== CUSTOMERS ==========
-export async function adminGetCustomers(): Promise<Customer[]> {
+export async function adminGetCustomers(options: {
+  keyword?: string;
+  status?: "all" | "active" | "locked";
+} = {}): Promise<Customer[]> {
+  const conditions: string[] = [];
+  const params: unknown[] = [];
+  const keyword = options.keyword?.trim();
+
+  if (keyword) {
+    const numericKeyword = keyword.replace(/^#/, "");
+    if (/^\d+$/.test(numericKeyword)) {
+      conditions.push("(id = ? OR ten LIKE ? OR dien_thoai LIKE ?)");
+      params.push(Number(numericKeyword), `%${numericKeyword}%`, `%${numericKeyword}%`);
+    } else {
+      conditions.push("(ten LIKE ? OR dien_thoai LIKE ?)");
+      params.push(`%${keyword}%`, `%${keyword}%`);
+    }
+  }
+
+  if (options.status === "active") {
+    conditions.push("trangthai = 1");
+  } else if (options.status === "locked") {
+    conditions.push("trangthai = 0");
+  }
+
+  const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
   return query<Customer>(
     `SELECT id, ten, tendangnhap, email, dien_thoai, dia_chi, diem_tich_luy, trangthai
-     FROM khach_hang ORDER BY id DESC`
+     FROM khach_hang ${where} ORDER BY id DESC`,
+    params
   );
 }
 
