@@ -42,7 +42,18 @@ export async function POST(req: Request) {
         { status: 500 }
       );
     }
-    console.error("[admin/login] Unexpected login error");
+    if (typeof e === "object" && e !== null && "code" in e) {
+      console.error("[admin/login] Unexpected login error", {
+        code: (e as { code?: unknown }).code,
+        name: e instanceof Error ? e.name : undefined,
+        message: e instanceof Error ? e.message : undefined,
+      });
+    } else {
+      console.error("[admin/login] Unexpected login error", {
+        name: e instanceof Error ? e.name : typeof e,
+        message: e instanceof Error ? e.message : undefined,
+      });
+    }
     return NextResponse.json(
       { error: "Hệ thống đăng nhập đang gặp sự cố. Vui lòng thử lại sau." },
       { status: 500 }
