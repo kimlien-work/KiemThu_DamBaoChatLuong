@@ -38,7 +38,9 @@ export default function AdminSidebar() {
         </Link>
         <p className="text-xs text-slate-400 mt-1">{admin?.ten}</p>
         <p className="text-xs text-slate-500">
-          {admin?.ten_chuc_vu || "Nhân viên"}
+          {admin?.chucvu_id === 1
+            ? "Quản trị viên"
+            : admin?.ten_chuc_vu || "Nhân viên"}
         </p>
       </div>
       <nav className="flex-1 p-3 space-y-1">

@@ -1,72 +1,63 @@
 "use client";
 
+import Link from "next/link";
 import { useAdminAuth } from "@/context/AdminAuthContext";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
 
-export default function AdminLoginPage() {
-  const { login } = useAdminAuth();
-  const router = useRouter();
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+export default function AdminDashboardPage() {
+  const { admin } = useAdminAuth();
+  const isAdmin = admin?.chucvu_id === 1;
+  const role = isAdmin
+    ? "Quản trị viên"
+    : admin?.ten_chuc_vu || "Nhân viên";
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-    const err = await login(username, password);
-    setLoading(false);
-    if (err) setError(err);
-    else router.push("/admin");
-  };
+  const shortcuts = [
+    { href: "/admin/products", label: "Quản lý sản phẩm" },
+    { href: "/admin/orders", label: "Xem đơn hàng" },
+    ...(isAdmin
+      ? [
+          { href: "/admin/customers", label: "Quản lý khách hàng" },
+          { href: "/admin/staff", label: "Quản lý nhân viên" },
+          { href: "/admin/stats", label: "Xem thống kê" },
+        ]
+      : [{ href: "/admin/staff", label: "Thông tin cá nhân" }]),
+  ];
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-100 px-4">
-      <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-8">
-        <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold text-slate-800">📷 Camera Store</h1>
-          <p className="text-slate-500 mt-1">Đăng nhập trang quản trị</p>
+    <div className="mx-auto max-w-4xl">
+      <h1 className="mb-6 text-2xl font-bold text-slate-800">
+        Bảng điều khiển
+      </h1>
+      <section className="rounded-xl border bg-white p-6 shadow-sm">
+        <p className="text-lg font-semibold text-slate-800">
+          Xin chào, {admin?.ten}
+        </p>
+        <p className="mt-2 text-slate-600">
+          Bạn đã đăng nhập với vai trò{" "}
+          <span className="font-semibold text-cyan-700">{role}</span>.
+        </p>
+        <p className="mt-1 text-sm text-slate-500">
+          {isAdmin
+            ? "Bạn có quyền quản lý toàn bộ cửa hàng."
+            : "Các thao tác quản trị được giới hạn theo quyền nhân viên."}
+        </p>
+      </section>
+
+      <section className="mt-6">
+        <h2 className="mb-3 text-lg font-semibold text-slate-800">
+          Truy cập nhanh
+        </h2>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {shortcuts.map((shortcut) => (
+            <Link
+              key={shortcut.href}
+              href={shortcut.href}
+              className="rounded-lg border bg-white p-4 text-sm font-medium text-cyan-700 transition hover:border-cyan-500 hover:bg-cyan-50"
+            >
+              {shortcut.label} →
+            </Link>
+          ))}
         </div>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <div className="bg-red-50 text-red-600 text-sm p-3 rounded-lg text-center">
-              {error}
-            </div>
-          )}
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Tên đăng nhập hoặc mã nhân viên
-            </label>
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="w-full border rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-cyan-500"
-              placeholder="abc@abc.com hoặc NV000001"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Mật khẩu</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full border rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-cyan-500"
-              required
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-cyan-600 text-white py-2.5 rounded-lg font-medium hover:bg-cyan-700 disabled:opacity-50"
-          >
-            {loading ? "Đang đăng nhập..." : "Đăng nhập"}
-          </button>
-        </form>
-      </div>
+      </section>
     </div>
   );
 }
