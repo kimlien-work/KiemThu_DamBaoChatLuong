@@ -42,12 +42,15 @@ export default function AdminProductsPage() {
     setError("");
     const params = new URLSearchParams();
     if (keyword.trim()) params.set("q", keyword.trim());
-    if (selectedCategory > 0) params.set("categoryId", String(selectedCategory));
+    if (selectedCategory > 0)
+      params.set("categoryId", String(selectedCategory));
     if (selectedSort !== "default") params.set("sort", selectedSort);
 
     try {
       const [productsResponse, categoriesResponse] = await Promise.all([
-        fetch(`/api/admin/products${params.size ? `?${params}` : ""}`, { cache: "no-store" }),
+        fetch(`/api/admin/products${params.size ? `?${params}` : ""}`, {
+          cache: "no-store",
+        }),
         fetch("/api/admin/categories", { cache: "no-store" }),
       ]);
       const [productsData, categoriesData] = await Promise.all([
@@ -56,7 +59,9 @@ export default function AdminProductsPage() {
       ]);
 
       if (!productsResponse.ok) {
-        throw new Error(productsData.error || "Không thể tải danh sách mặt hàng.");
+        throw new Error(
+          productsData.error || "Không thể tải danh sách mặt hàng."
+        );
       }
       if (!categoriesResponse.ok) {
         throw new Error(categoriesData.error || "Không thể tải danh mục.");
@@ -76,7 +81,9 @@ export default function AdminProductsPage() {
     }
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+  }, []);
 
   const submitSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -202,7 +209,12 @@ export default function AdminProductsPage() {
       } else {
         const d = await res.json();
         if (uploadedPath) {
-          await fetch(`/api/admin/products/upload?path=${encodeURIComponent(uploadedPath)}`, { method: "DELETE" });
+          await fetch(
+            `/api/admin/products/upload?path=${encodeURIComponent(
+              uploadedPath
+            )}`,
+            { method: "DELETE" }
+          );
         }
         setMsg(d.error || "Lỗi");
       }
@@ -220,19 +232,26 @@ export default function AdminProductsPage() {
     load();
   };
 
-  const catName = (id: number) => categories.find((c) => c.id === id)?.tendanhmuc || id;
+  const catName = (id: number) =>
+    categories.find((c) => c.id === id)?.tendanhmuc || id;
 
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-slate-800">Quản lý sản phẩm</h1>
-        <button onClick={openAdd} className="bg-cyan-600 text-white px-4 py-2 rounded-lg hover:bg-cyan-700">
+        <button
+          onClick={openAdd}
+          className="bg-cyan-600 text-white px-4 py-2 rounded-lg hover:bg-cyan-700"
+        >
           + Thêm sản phẩm
         </button>
       </div>
       {msg && <p className="mb-3 text-sm text-green-600">{msg}</p>}
 
-      <form onSubmit={submitSearch} className="bg-white border rounded-xl p-4 mb-6 shadow-sm">
+      <form
+        onSubmit={submitSearch}
+        className="bg-white border rounded-xl p-4 mb-6 shadow-sm"
+      >
         <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_220px_220px_auto] gap-3">
           <input
             type="search"
@@ -255,7 +274,9 @@ export default function AdminProductsPage() {
           >
             <option value={0}>Tất cả danh mục</option>
             {categories.map((category) => (
-              <option key={category.id} value={category.id}>{category.tendanhmuc}</option>
+              <option key={category.id} value={category.id}>
+                {category.tendanhmuc}
+              </option>
             ))}
           </select>
           <select
@@ -274,11 +295,18 @@ export default function AdminProductsPage() {
           </select>
           <div className="flex gap-2">
             {searchInput && (
-              <button type="button" onClick={clearSearch} className="border px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-50">
+              <button
+                type="button"
+                onClick={clearSearch}
+                className="border px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-50"
+              >
                 Xóa
               </button>
             )}
-            <button type="submit" className="border border-cyan-600 text-cyan-700 px-4 py-2 rounded-lg hover:bg-cyan-50">
+            <button
+              type="submit"
+              className="border border-cyan-600 text-cyan-700 px-4 py-2 rounded-lg hover:bg-cyan-50"
+            >
               Tìm kiếm
             </button>
           </div>
@@ -286,52 +314,96 @@ export default function AdminProductsPage() {
       </form>
 
       {showForm && (
-        <form onSubmit={save} className="bg-white border rounded-xl p-5 mb-6 shadow-sm space-y-3">
-          <h2 className="font-bold text-lg">{editId ? "Sửa sản phẩm" : "Thêm sản phẩm"}</h2>
+        <form
+          onSubmit={save}
+          className="bg-white border rounded-xl p-5 mb-6 shadow-sm space-y-3"
+        >
+          <h2 className="font-bold text-lg">
+            {editId ? "Sửa sản phẩm" : "Thêm sản phẩm"}
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <label className="text-sm font-medium">Mã mặt hàng</label>
               <input
                 className="w-full border rounded px-3 py-2"
                 value={form.ma_mat_hang}
-                onChange={(e) => setForm({ ...form, ma_mat_hang: e.target.value.toUpperCase() })}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    ma_mat_hang: e.target.value.toUpperCase(),
+                  })
+                }
                 placeholder={editId ? undefined : "Để trống để tự sinh mã"}
               />
             </div>
             <div>
               <label className="text-sm font-medium">Tên sản phẩm</label>
-              <input required className="w-full border rounded px-3 py-2" value={form.tenmathang}
-                onChange={(e) => setForm({ ...form, tenmathang: e.target.value })} />
+              <input
+                required
+                className="w-full border rounded px-3 py-2"
+                value={form.tenmathang}
+                onChange={(e) =>
+                  setForm({ ...form, tenmathang: e.target.value })
+                }
+              />
             </div>
             <div>
               <label className="text-sm font-medium">Danh mục</label>
-              <select className="w-full border rounded px-3 py-2" value={form.danhmuc_id}
-                onChange={(e) => setForm({ ...form, danhmuc_id: Number(e.target.value) })}>
+              <select
+                className="w-full border rounded px-3 py-2"
+                value={form.danhmuc_id}
+                onChange={(e) =>
+                  setForm({ ...form, danhmuc_id: Number(e.target.value) })
+                }
+              >
                 {categories.map((c) => (
-                  <option key={c.id} value={c.id}>{c.tendanhmuc}</option>
+                  <option key={c.id} value={c.id}>
+                    {c.tendanhmuc}
+                  </option>
                 ))}
               </select>
             </div>
             <div>
               <label className="text-sm font-medium">Giá gốc</label>
-              <input type="number" className="w-full border rounded px-3 py-2" value={form.giagoc}
-                onChange={(e) => setForm({ ...form, giagoc: Number(e.target.value) })} />
+              <input
+                type="number"
+                className="w-full border rounded px-3 py-2"
+                value={form.giagoc}
+                onChange={(e) =>
+                  setForm({ ...form, giagoc: Number(e.target.value) })
+                }
+              />
             </div>
             <div>
               <label className="text-sm font-medium">Giá bán</label>
-              <input type="number" className="w-full border rounded px-3 py-2" value={form.giaban}
-                onChange={(e) => setForm({ ...form, giaban: Number(e.target.value) })} />
+              <input
+                type="number"
+                className="w-full border rounded px-3 py-2"
+                value={form.giaban}
+                onChange={(e) =>
+                  setForm({ ...form, giaban: Number(e.target.value) })
+                }
+              />
             </div>
             <div>
               <label className="text-sm font-medium">Tồn kho</label>
-              <input type="number" className="w-full border rounded px-3 py-2" value={form.soluongton}
-                onChange={(e) => setForm({ ...form, soluongton: Number(e.target.value) })} />
+              <input
+                type="number"
+                className="w-full border rounded px-3 py-2"
+                value={form.soluongton}
+                onChange={(e) =>
+                  setForm({ ...form, soluongton: Number(e.target.value) })
+                }
+              />
             </div>
             <div>
               <label className="text-sm font-medium">Đường dẫn ảnh</label>
-              <input className="w-full border rounded px-3 py-2" value={form.hinhanh}
+              <input
+                className="w-full border rounded px-3 py-2"
+                value={form.hinhanh}
                 onChange={(e) => setForm({ ...form, hinhanh: e.target.value })}
-                placeholder="images/products/..." />
+                placeholder="images/products/..."
+              />
             </div>
             <div className="md:col-span-2">
               <label className="text-sm font-medium">Hình ảnh sản phẩm</label>
@@ -359,33 +431,62 @@ export default function AdminProductsPage() {
                     className="hidden"
                     onChange={(e) => selectImage(e.target.files?.[0])}
                   />
-                  <label htmlFor="product-image-input" className="inline-block cursor-pointer border border-cyan-600 text-cyan-700 px-4 py-2 rounded-lg hover:bg-cyan-50">
+                  <label
+                    htmlFor="product-image-input"
+                    className="inline-block cursor-pointer border border-cyan-600 text-cyan-700 px-4 py-2 rounded-lg hover:bg-cyan-50"
+                  >
                     Tải ảnh từ máy tính
                   </label>
                   {selectedImage && (
                     <>
-                      <p className="text-xs text-slate-500">{selectedImage.name}</p>
-                      <button type="button" onClick={cancelImageSelection} className="text-xs text-red-600 hover:underline">
+                      <p className="text-xs text-slate-500">
+                        {selectedImage.name}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={cancelImageSelection}
+                        className="text-xs text-red-600 hover:underline"
+                      >
                         Hủy ảnh đã chọn
                       </button>
                     </>
                   )}
                 </div>
               </div>
-              {uploading && <p className="mt-2 text-sm text-cyan-700">Đang tải ảnh lên...</p>}
-              {imageError && <p className="mt-2 text-sm text-red-600">{imageError}</p>}
+              {uploading && (
+                <p className="mt-2 text-sm text-cyan-700">
+                  Đang tải ảnh lên...
+                </p>
+              )}
+              {imageError && (
+                <p className="mt-2 text-sm text-red-600">{imageError}</p>
+              )}
             </div>
           </div>
           <div>
             <label className="text-sm font-medium">Mô tả</label>
-            <textarea className="w-full border rounded px-3 py-2" rows={3} value={form.mota}
-              onChange={(e) => setForm({ ...form, mota: e.target.value })} />
+            <textarea
+              className="w-full border rounded px-3 py-2"
+              rows={3}
+              value={form.mota}
+              onChange={(e) => setForm({ ...form, mota: e.target.value })}
+            />
           </div>
           <div className="flex gap-2">
-            <button type="submit" disabled={uploading} className="bg-cyan-600 text-white px-5 py-2 rounded-lg disabled:opacity-50">
+            <button
+              type="submit"
+              disabled={uploading}
+              className="bg-cyan-600 text-white px-5 py-2 rounded-lg disabled:opacity-50"
+            >
               {uploading ? "Đang lưu..." : "Lưu"}
             </button>
-            <button type="button" onClick={() => setShowForm(false)} className="border px-5 py-2 rounded-lg">Hủy</button>
+            <button
+              type="button"
+              onClick={() => setShowForm(false)}
+              className="border px-5 py-2 rounded-lg"
+            >
+              Hủy
+            </button>
           </div>
         </form>
       )}
@@ -398,7 +499,9 @@ export default function AdminProductsPage() {
 
       {!loading && error && (
         <div className="bg-red-50 border border-red-100 rounded-xl p-6 text-center shadow-sm">
-          <p className="text-red-700 mb-3">Không thể tải danh sách mặt hàng. Vui lòng thử lại sau.</p>
+          <p className="text-red-700 mb-3">
+            {error || "Không thể tải danh sách mặt hàng. Vui lòng thử lại sau."}
+          </p>
           <button
             type="button"
             onClick={() => load(searchQuery, categoryId, sort)}
@@ -410,54 +513,78 @@ export default function AdminProductsPage() {
       )}
 
       {!loading && !error && (
-      <div className="bg-white border rounded-xl shadow-sm overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-left">
-            <tr>
-              <th className="p-3">ID</th>
-              <th className="p-3">Mã mặt hàng</th>
-              <th className="p-3">Ảnh</th>
-              <th className="p-3">Tên</th>
-              <th className="p-3">Danh mục</th>
-              <th className="p-3">Giá bán</th>
-              <th className="p-3">Tồn</th>
-              <th className="p-3">TT</th>
-              <th className="p-3">Thao tác</th>
-            </tr>
-          </thead>
-          <tbody>
-            {products.length === 0 && (
+        <div className="bg-white border rounded-xl shadow-sm overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-slate-50 text-left">
               <tr>
-                <td colSpan={9} className="p-6 text-center text-slate-500">
-                  Không tìm thấy mặt hàng phù hợp.
-                </td>
+                <th className="p-3">ID</th>
+                <th className="p-3">Mã mặt hàng</th>
+                <th className="p-3">Ảnh</th>
+                <th className="p-3">Tên</th>
+                <th className="p-3">Danh mục</th>
+                <th className="p-3">Giá bán</th>
+                <th className="p-3">Tồn</th>
+                <th className="p-3">TT</th>
+                <th className="p-3">Thao tác</th>
               </tr>
-            )}
-            {products.map((p) => (
-              <tr key={p.id} className="border-t">
-                <td className="p-3">{p.id}</td>
-                <td className="p-3 font-medium">{p.ma_mat_hang || `MH${String(p.id).padStart(6, "0")}`}</td>
-                <td className="p-3">
-                  <img src={imageUrl(p.hinhanh)} alt="" className="w-12 h-12 object-contain" />
-                </td>
-                <td className="p-3 font-medium max-w-[200px] truncate">{p.tenmathang}</td>
-                <td className="p-3">{catName(p.danhmuc_id)}</td>
-                <td className="p-3 text-red-600">{formatPrice(p.giaban)}</td>
-                <td className="p-3">{p.soluongton}</td>
-                <td className="p-3">
-                  <span className={`text-xs px-2 py-0.5 rounded ${p.trangthai ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>
-                    {p.trangthai ? "Hiện" : "Ẩn"}
-                  </span>
-                </td>
-                <td className="p-3 space-x-1">
-                  <button onClick={() => openEdit(p)} className="text-amber-600 hover:underline">Sửa</button>
-                  <button onClick={() => remove(p.id)} className="text-red-600 hover:underline">Xóa</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {products.length === 0 && (
+                <tr>
+                  <td colSpan={9} className="p-6 text-center text-slate-500">
+                    Không tìm thấy mặt hàng phù hợp.
+                  </td>
+                </tr>
+              )}
+              {products.map((p) => (
+                <tr key={p.id} className="border-t">
+                  <td className="p-3">{p.id}</td>
+                  <td className="p-3 font-medium">
+                    {p.ma_mat_hang || `MH${String(p.id).padStart(6, "0")}`}
+                  </td>
+                  <td className="p-3">
+                    <img
+                      src={imageUrl(p.hinhanh)}
+                      alt=""
+                      className="w-12 h-12 object-contain"
+                    />
+                  </td>
+                  <td className="p-3 font-medium max-w-[200px] truncate">
+                    {p.tenmathang}
+                  </td>
+                  <td className="p-3">{catName(p.danhmuc_id)}</td>
+                  <td className="p-3 text-red-600">{formatPrice(p.giaban)}</td>
+                  <td className="p-3">{p.soluongton}</td>
+                  <td className="p-3">
+                    <span
+                      className={`text-xs px-2 py-0.5 rounded ${
+                        p.trangthai
+                          ? "bg-green-100 text-green-700"
+                          : "bg-gray-100 text-gray-500"
+                      }`}
+                    >
+                      {p.trangthai ? "Hiện" : "Ẩn"}
+                    </span>
+                  </td>
+                  <td className="p-3 space-x-1">
+                    <button
+                      onClick={() => openEdit(p)}
+                      className="text-amber-600 hover:underline"
+                    >
+                      Sửa
+                    </button>
+                    <button
+                      onClick={() => remove(p.id)}
+                      className="text-red-600 hover:underline"
+                    >
+                      Xóa
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );
