@@ -411,6 +411,51 @@ export async function adminGetStaff(): Promise<Staff[]> {
   );
 }
 
+export async function adminCreateStaff(data: {
+  tendangnhap: string;
+  ten: string;
+  chucvu_id: number;
+  mat_khau: string;
+  dien_thoai?: string;
+  email?: string;
+}): Promise<Staff | null> {
+  const pool = getPool();
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+
+    const [roles] = await conn.execute(
+      "SELECT id FROM chuc_vu WHERE id = ?",
+      [data.chucvu_id]
+    );
+    if ((roles as { id: number }[]).length === 0) {
+      throw new Error("Chức vụ không tồn tại.");
+    }
+
+    const [result] = await conn.execute(
+      `INSERT INTO nhan_vien
+       (tendangnhap, ten, chucvu_id, mat_khau, dien_thoai, email, trangthai)
+       VALUES (?, ?, ?, ?, ?, ?, 1)`,
+      [
+        data.tendangnhap,
+        data.ten,
+        data.chucvu_id,
+        md5(data.mat_khau),
+        data.dien_thoai || null,
+        data.email || null,
+      ]
+    );
+    await conn.commit();
+
+    return findStaffById((result as { insertId: number }).insertId, false);
+  } catch (e) {
+    await conn.rollback();
+    throw e;
+  } finally {
+    conn.release();
+  }
+}
+
 export async function adminUpdateStaffProfile(
   id: number,
   data: Partial<Pick<Staff, "ten" | "dien_thoai" | "email">>

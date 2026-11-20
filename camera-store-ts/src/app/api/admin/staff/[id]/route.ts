@@ -34,24 +34,32 @@ export async function PATCH(
 
     const update: { ten?: string; dien_thoai?: string | null; email?: string | null } = {};
     if ("ten" in data) {
-      if (typeof data.ten !== "string" || !data.ten.trim() || data.ten.trim().length > 100) {
-        return NextResponse.json({ error: "Họ tên phải có từ 1 đến 100 ký tự" }, { status: 400 });
+      if (typeof data.ten !== "string" || !data.ten.trim()) {
+        return NextResponse.json({ field: "ten", error: "Vui lòng nhập họ và tên nhân viên." }, { status: 400 });
+      }
+      if (data.ten.trim().length > 100) {
+        return NextResponse.json({ field: "ten", error: "Nội dung vượt quá số ký tự cho phép." }, { status: 400 });
       }
       update.ten = data.ten.trim();
     }
     if ("dien_thoai" in data) {
-      if (typeof data.dien_thoai !== "string" || data.dien_thoai.trim().length > 15) {
-        return NextResponse.json({ error: "Số điện thoại không hợp lệ" }, { status: 400 });
+      if (typeof data.dien_thoai !== "string") {
+        return NextResponse.json({ field: "dien_thoai", error: "Số điện thoại không hợp lệ." }, { status: 400 });
+      }
+      if (data.dien_thoai.trim().length > 15) {
+        return NextResponse.json({ field: "dien_thoai", error: "Nội dung vượt quá số ký tự cho phép." }, { status: 400 });
       }
       update.dien_thoai = data.dien_thoai.trim() || null;
     }
     if ("email" in data) {
-      if (
-        typeof data.email !== "string" ||
-        data.email.trim().length > 80 ||
-        (data.email.trim() !== "" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email.trim()))
-      ) {
-        return NextResponse.json({ error: "Email không hợp lệ" }, { status: 400 });
+      if (typeof data.email !== "string") {
+        return NextResponse.json({ field: "email", error: "Địa chỉ email không hợp lệ." }, { status: 400 });
+      }
+      if (data.email.trim().length > 80) {
+        return NextResponse.json({ field: "email", error: "Nội dung vượt quá số ký tự cho phép." }, { status: 400 });
+      }
+      if (data.email.trim() !== "" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email.trim())) {
+        return NextResponse.json({ field: "email", error: "Địa chỉ email không hợp lệ." }, { status: 400 });
       }
       update.email = data.email.trim() || null;
     }
