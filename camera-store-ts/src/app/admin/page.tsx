@@ -1,71 +1,71 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { formatPrice } from "@/lib/utils";
+import { useAdminAuth } from "@/context/AdminAuthContext";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
-interface Stats {
-  products: number;
-  orders: number;
-  customers: number;
-  pending: number;
-  revenue: number;
-}
-
-export default function AdminDashboard() {
-  const [stats, setStats] = useState<Stats | null>(null);
+export default function AdminLoginPage() {
+  const { login } = useAdminAuth();
+  const router = useRouter();
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    fetch("/api/admin/stats")
-      .then((r) => r.json())
-      .then((d) => {
-        if (d.error) setError(d.error);
-        else setStats(d);
-      })
-      .catch((e) => setError(String(e)));
-  }, []);
-
-  if (error) {
-    return (
-      <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg">
-        <p className="font-bold">Lỗi tải thống kê</p>
-        <p className="text-sm mt-1">{error}</p>
-        <p className="text-sm mt-2">Kiểm tra kết nối DB (Aiven) và bảng nhan_vien, donhang, mathang…</p>
-      </div>
-    );
-  }
-
-  if (!stats) return <p className="text-slate-500">Đang tải...</p>;
-
-  const cards = [
-    { label: "Sản phẩm", value: stats.products, href: "/admin/products", color: "bg-blue-500" },
-    { label: "Đơn hàng", value: stats.orders, href: "/admin/orders", color: "bg-violet-500" },
-    { label: "Chờ duyệt", value: stats.pending, href: "/admin/orders", color: "bg-amber-500" },
-    { label: "Khách hàng", value: stats.customers, href: "/admin/customers", color: "bg-emerald-500" },
-    {
-      label: "Doanh thu (hoàn tất)",
-      value: formatPrice(stats.revenue),
-      href: "/admin/stats",
-      color: "bg-rose-500",
-    },
-  ];
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    const err = await login(username, password);
+    setLoading(false);
+    if (err) setError(err);
+    else router.push("/admin");
+  };
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold text-slate-800 mb-6">Bảng điều khiển</h1>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-        {cards.map((c) => (
-          <Link
-            key={c.label}
-            href={c.href}
-            className="bg-white rounded-xl shadow-sm border p-5 hover:shadow-md transition"
+    <div className="min-h-screen flex items-center justify-center bg-slate-100 px-4">
+      <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-8">
+        <div className="text-center mb-6">
+          <h1 className="text-2xl font-bold text-slate-800">📷 Camera Store</h1>
+          <p className="text-slate-500 mt-1">Đăng nhập trang quản trị</p>
+        </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {error && (
+            <div className="bg-red-50 text-red-600 text-sm p-3 rounded-lg text-center">
+              {error}
+            </div>
+          )}
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Tên đăng nhập hoặc mã nhân viên
+            </label>
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="w-full border rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              placeholder="abc@abc.com hoặc NV000001"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Mật khẩu</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full border rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              required
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-cyan-600 text-white py-2.5 rounded-lg font-medium hover:bg-cyan-700 disabled:opacity-50"
           >
-            <div className={`w-10 h-10 ${c.color} rounded-lg mb-3 opacity-90`} />
-            <p className="text-sm text-slate-500">{c.label}</p>
-            <p className="text-2xl font-bold text-slate-800 mt-1">{c.value}</p>
-          </Link>
-        ))}
+            {loading ? "Đang đăng nhập..." : "Đăng nhập"}
+          </button>
+        </form>
       </div>
     </div>
   );

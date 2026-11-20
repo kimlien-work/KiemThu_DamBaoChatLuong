@@ -1,6 +1,13 @@
 import { createHash, randomUUID } from "crypto";
 import { query, queryOne, getPool } from "./db";
-import type { Product, Customer, News, Staff, AdminOrder, OrderItem } from "@/types";
+import type {
+  Product,
+  Customer,
+  News,
+  Staff,
+  AdminOrder,
+  OrderItem,
+} from "@/types";
 import { calculateLoyaltyPoints } from "./loyalty";
 import { normalizeNewsTitle, stripHtml } from "./textSanitize";
 
@@ -9,23 +16,27 @@ export function md5(text: string): string {
 }
 
 // ========== AUTH ==========
-export async function findStaffByLogin(username: string, password: string): Promise<Staff | null> {
+export async function findStaffByLogin(
+  username: string,
+  password: string
+): Promise<Staff | null> {
   const hashed = md5(password);
-  // Thử MD5 (như PHP) rồi plain text
-  const staff = await queryOne<Staff>(
+  return queryOne<Staff>(
     `SELECT n.id, CONCAT('NV', LPAD(n.id, 6, '0')) AS ma_nhan_vien,
             n.tendangnhap, n.ten, n.chucvu_id, c.ten AS ten_chuc_vu,
             n.dien_thoai, n.email, n.hinhanh, n.trangthai
      FROM nhan_vien n
      LEFT JOIN chuc_vu c ON n.chucvu_id = c.id
      WHERE (n.tendangnhap = ? OR CONCAT('NV', LPAD(n.id, 6, '0')) = ?)
-       AND (n.mat_khau = ? OR n.mat_khau = ?) AND n.trangthai = 1`,
-    [username, username, hashed, password]
+       AND n.mat_khau = ? AND n.trangthai = 1`,
+    [username, username, hashed]
   );
-  return staff;
 }
 
-export async function findStaffById(id: number, activeOnly = true): Promise<Staff | null> {
+export async function findStaffById(
+  id: number,
+  activeOnly = true
+): Promise<Staff | null> {
   return queryOne<Staff>(
     `SELECT n.id, CONCAT('NV', LPAD(n.id, 6, '0')) AS ma_nhan_vien,
             n.tendangnhap, n.ten, n.chucvu_id, c.ten AS ten_chuc_vu,
@@ -39,10 +50,18 @@ export async function findStaffById(id: number, activeOnly = true): Promise<Staf
 
 // ========== STATS ==========
 export async function getAdminStats(from?: string, to?: string) {
-  const [products] = await query<{ c: number }>("SELECT COUNT(*) as c FROM mathang");
-  const [orders] = await query<{ c: number }>("SELECT COUNT(*) as c FROM donhang");
-  const [customers] = await query<{ c: number }>("SELECT COUNT(*) as c FROM khach_hang");
-  const [pending] = await query<{ c: number }>("SELECT COUNT(*) as c FROM donhang WHERE trangthai = 0");
+  const [products] = await query<{ c: number }>(
+    "SELECT COUNT(*) as c FROM mathang"
+  );
+  const [orders] = await query<{ c: number }>(
+    "SELECT COUNT(*) as c FROM donhang"
+  );
+  const [customers] = await query<{ c: number }>(
+    "SELECT COUNT(*) as c FROM khach_hang"
+  );
+  const [pending] = await query<{ c: number }>(
+    "SELECT COUNT(*) as c FROM donhang WHERE trangthai = 0"
+  );
   let revenueSql =
     "SELECT COALESCE(SUM(tongtien),0) as s FROM donhang WHERE trangthai = 2";
   let revenueParams: unknown[] = [];
@@ -63,11 +82,13 @@ export async function getAdminStats(from?: string, to?: string) {
 }
 
 // ========== PRODUCTS (all, including hidden) ==========
-export async function adminGetProducts(options: {
-  keyword?: string;
-  categoryId?: number;
-  sort?: string;
-} = {}): Promise<Product[]> {
+export async function adminGetProducts(
+  options: {
+    keyword?: string;
+    categoryId?: number;
+    sort?: string;
+  } = {}
+): Promise<Product[]> {
   const conditions: string[] = [];
   const params: unknown[] = [];
   const keyword = options.keyword?.trim();
@@ -89,11 +110,11 @@ export async function adminGetProducts(options: {
     newest: "created_at DESC, id DESC",
     oldest: "created_at ASC, id ASC",
   };
-  const sort = options.sort && orderBy[options.sort]
-    ? orderBy[options.sort]
-    : "id DESC";
+  const sort =
+    options.sort && orderBy[options.sort] ? orderBy[options.sort] : "id DESC";
 
-  const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+  const where =
+    conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
   return query<Product>(
     `SELECT id, ma_mat_hang, tenmathang, mota, giagoc, giaban, soluongton, hinhanh, danhmuc_id, luotxem, luotmua, trangthai
      FROM mathang ${where} ORDER BY ${sort}`,
@@ -153,10 +174,10 @@ export async function adminCreateProduct(data: {
     );
     const productId = (result as { insertId: number }).insertId;
     const finalCode = code || `MH${String(productId).padStart(6, "0")}`;
-    await conn.execute(
-      "UPDATE mathang SET ma_mat_hang = ? WHERE id = ?",
-      [finalCode, productId]
-    );
+    await conn.execute("UPDATE mathang SET ma_mat_hang = ? WHERE id = ?", [
+      finalCode,
+      productId,
+    ]);
 
     await conn.commit();
     return productId;
@@ -259,12 +280,21 @@ export async function adminDeleteProduct(id: number): Promise<void> {
 // ========== CATEGORIES ==========
 export async function adminCreateCategory(tendanhmuc: string): Promise<number> {
   const pool = getPool();
-  const [result] = await pool.execute("INSERT INTO danhmuc (tendanhmuc) VALUES (?)", [tendanhmuc]);
+  const [result] = await pool.execute(
+    "INSERT INTO danhmuc (tendanhmuc) VALUES (?)",
+    [tendanhmuc]
+  );
   return (result as { insertId: number }).insertId;
 }
 
-export async function adminUpdateCategory(id: number, tendanhmuc: string): Promise<void> {
-  await query("UPDATE danhmuc SET tendanhmuc = ? WHERE id = ?", [tendanhmuc, id]);
+export async function adminUpdateCategory(
+  id: number,
+  tendanhmuc: string
+): Promise<void> {
+  await query("UPDATE danhmuc SET tendanhmuc = ? WHERE id = ?", [
+    tendanhmuc,
+    id,
+  ]);
 }
 
 export async function adminDeleteCategory(id: number): Promise<void> {
@@ -272,10 +302,12 @@ export async function adminDeleteCategory(id: number): Promise<void> {
 }
 
 // ========== ORDERS ==========
-export async function adminGetOrders(options: {
-  keyword?: string;
-  includeSensitive?: boolean;
-} = {}): Promise<AdminOrder[]> {
+export async function adminGetOrders(
+  options: {
+    keyword?: string;
+    includeSensitive?: boolean;
+  } = {}
+): Promise<AdminOrder[]> {
   const keyword = options.keyword?.trim();
   const sensitiveFields = options.includeSensitive
     ? `d.ghichu, k.ten AS tenkhachhang, k.dien_thoai`
@@ -294,7 +326,10 @@ export async function adminGetOrders(options: {
   );
 }
 
-export async function adminUpdateOrderStatus(id: number, trangthai: number): Promise<void> {
+export async function adminUpdateOrderStatus(
+  id: number,
+  trangthai: number
+): Promise<void> {
   if (![0, 1, 2, 3].includes(trangthai)) {
     const error = new Error("Trạng thái đơn hàng không hợp lệ.");
     (error as Error & { status?: number }).status = 400;
@@ -309,7 +344,12 @@ export async function adminUpdateOrderStatus(id: number, trangthai: number): Pro
       "SELECT id, khach_hang_id, tongtien, trangthai FROM donhang WHERE id = ? FOR UPDATE",
       [id]
     );
-    const orders = rows as { id: number; khach_hang_id: number; tongtien: number; trangthai: number }[];
+    const orders = rows as {
+      id: number;
+      khach_hang_id: number;
+      tongtien: number;
+      trangthai: number;
+    }[];
     if (orders.length === 0) {
       const error = new Error("Đơn hàng không tồn tại.");
       (error as Error & { status?: number }).status = 404;
@@ -324,7 +364,9 @@ export async function adminUpdateOrderStatus(id: number, trangthai: number): Pro
       3: [],
     };
     if (!allowedTransitions[order.trangthai]?.includes(trangthai)) {
-      const error = new Error("Trạng thái đơn hàng không hợp lệ để thực hiện thao tác.");
+      const error = new Error(
+        "Trạng thái đơn hàng không hợp lệ để thực hiện thao tác."
+      );
       (error as Error & { status?: number }).status = 409;
       throw error;
     }
@@ -371,7 +413,10 @@ export async function adminUpdateOrderStatus(id: number, trangthai: number): Pro
       }
     }
 
-    await conn.execute("UPDATE donhang SET trangthai = ? WHERE id = ?", [trangthai, id]);
+    await conn.execute("UPDATE donhang SET trangthai = ? WHERE id = ?", [
+      trangthai,
+      id,
+    ]);
     await conn.commit();
   } catch (e) {
     await conn.rollback();
@@ -389,7 +434,11 @@ export async function adminGetOrderDetail(
     `SELECT d.id, d.khach_hang_id, d.ngay, d.tongtien,
             ${includeSensitive ? "d.ghichu" : "NULL AS ghichu"},
             d.trangthai,
-            ${includeSensitive ? "k.ten AS tenkhachhang, k.dien_thoai" : "NULL AS tenkhachhang, NULL AS dien_thoai"}
+            ${
+              includeSensitive
+                ? "k.ten AS tenkhachhang, k.dien_thoai"
+                : "NULL AS tenkhachhang, NULL AS dien_thoai"
+            }
      FROM donhang d
      LEFT JOIN khach_hang k ON k.id = d.khach_hang_id
      WHERE d.id = ?`,
@@ -406,10 +455,12 @@ export async function adminGetOrderDetail(
 }
 
 // ========== CUSTOMERS ==========
-export async function adminGetCustomers(options: {
-  keyword?: string;
-  status?: "all" | "active" | "locked";
-} = {}): Promise<Customer[]> {
+export async function adminGetCustomers(
+  options: {
+    keyword?: string;
+    status?: "all" | "active" | "locked";
+  } = {}
+): Promise<Customer[]> {
   const conditions: string[] = [];
   const params: unknown[] = [];
   const keyword = options.keyword?.trim();
@@ -418,7 +469,11 @@ export async function adminGetCustomers(options: {
     const numericKeyword = keyword.replace(/^#/, "");
     if (/^\d+$/.test(numericKeyword)) {
       conditions.push("(id = ? OR ten LIKE ? OR dien_thoai LIKE ?)");
-      params.push(Number(numericKeyword), `%${numericKeyword}%`, `%${numericKeyword}%`);
+      params.push(
+        Number(numericKeyword),
+        `%${numericKeyword}%`,
+        `%${numericKeyword}%`
+      );
     } else {
       conditions.push("(ten LIKE ? OR dien_thoai LIKE ?)");
       params.push(`%${keyword}%`, `%${keyword}%`);
@@ -431,7 +486,8 @@ export async function adminGetCustomers(options: {
     conditions.push("trangthai = 0");
   }
 
-  const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+  const where =
+    conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
   return query<Customer>(
     `SELECT id, ten, tendangnhap, email, dien_thoai, dia_chi, diem_tich_luy, trangthai
      FROM khach_hang ${where} ORDER BY id DESC`,
@@ -439,8 +495,14 @@ export async function adminGetCustomers(options: {
   );
 }
 
-export async function adminToggleCustomer(id: number, trangthai: number): Promise<void> {
-  await query("UPDATE khach_hang SET trangthai = ? WHERE id = ?", [trangthai, id]);
+export async function adminToggleCustomer(
+  id: number,
+  trangthai: number
+): Promise<void> {
+  await query("UPDATE khach_hang SET trangthai = ? WHERE id = ?", [
+    trangthai,
+    id,
+  ]);
 }
 
 // ========== STAFF ==========
@@ -467,10 +529,9 @@ export async function adminCreateStaff(data: {
   try {
     await conn.beginTransaction();
 
-    const [roles] = await conn.execute(
-      "SELECT id FROM chuc_vu WHERE id = ?",
-      [data.chucvu_id]
-    );
+    const [roles] = await conn.execute("SELECT id FROM chuc_vu WHERE id = ?", [
+      data.chucvu_id,
+    ]);
     if ((roles as { id: number }[]).length === 0) {
       throw new Error("Chức vụ không tồn tại.");
     }
@@ -520,7 +581,10 @@ export async function adminUpdateStaffProfile(
   }
 
   if (updates.length === 0) return null;
-  await query(`UPDATE nhan_vien SET ${updates.join(", ")} WHERE id = ?`, [...values, id]);
+  await query(`UPDATE nhan_vien SET ${updates.join(", ")} WHERE id = ?`, [
+    ...values,
+    id,
+  ]);
   return findStaffById(id, false);
 }
 
@@ -550,7 +614,9 @@ export async function adminCreateNews(data: {
       [title]
     );
     if ((duplicates as { id: number }[]).length > 0) {
-      throw new Error("Tiêu đề bài viết đã tồn tại. Vui lòng sử dụng tiêu đề khác.");
+      throw new Error(
+        "Tiêu đề bài viết đã tồn tại. Vui lòng sử dụng tiêu đề khác."
+      );
     }
 
     const [result] = await conn.execute(
@@ -576,7 +642,13 @@ export async function adminCreateNews(data: {
 
 export async function adminUpdateNews(
   id: number,
-  data: Partial<{ tieude: string; tomtat: string; noidung: string; hinhanh: string; trangthai: number }>,
+  data: Partial<{
+    tieude: string;
+    tomtat: string;
+    noidung: string;
+    hinhanh: string;
+    trangthai: number;
+  }>,
   expectedVersion?: number,
   force = false
 ): Promise<void> {
@@ -612,7 +684,9 @@ export async function adminUpdateNews(
         [title, id]
       );
       if ((duplicates as { id: number }[]).length > 0) {
-        throw new Error("Tiêu đề bài viết đã tồn tại. Vui lòng sử dụng tiêu đề khác.");
+        throw new Error(
+          "Tiêu đề bài viết đã tồn tại. Vui lòng sử dụng tiêu đề khác."
+        );
       }
     }
 
