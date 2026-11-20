@@ -18,6 +18,33 @@ function isMissingProductCodeColumn(error: unknown): boolean {
   );
 }
 
+function getProductLoadError(error: unknown): string | null {
+  if (typeof error !== "object" || error === null || !("code" in error)) {
+    return null;
+  }
+
+  switch (error.code) {
+    case "ER_NO_SUCH_TABLE":
+      return "Database chưa có bảng sản phẩm mathang. Hãy kiểm tra DB_NAME và import database/camera_shop.sql.";
+    case "ER_BAD_FIELD_ERROR":
+      return "Cấu trúc bảng sản phẩm chưa khớp với ứng dụng. Hãy kiểm tra các cột trong database/camera_shop.sql.";
+    case "ER_ACCESS_DENIED_ERROR":
+      return "Ứng dụng không được phép truy cập MySQL. Hãy kiểm tra DB_USER và DB_PASSWORD trên môi trường đang chạy.";
+    case "ER_BAD_DB_ERROR":
+      return "Không tìm thấy database cấu hình cho ứng dụng. Hãy kiểm tra DB_NAME.";
+    case "ECONNREFUSED":
+    case "ETIMEDOUT":
+    case "ENOTFOUND":
+    case "EHOSTUNREACH":
+    case "ECONNRESET":
+      return "Ứng dụng không kết nối được MySQL. Hãy kiểm tra DB_HOST, DB_PORT và trạng thái database.";
+    default:
+      return typeof error.code === "string"
+        ? `Không tải được sản phẩm (mã lỗi ${error.code}). Hãy kiểm tra Runtime Logs của Vercel.`
+        : null;
+  }
+}
+
 export async function GET(req: Request) {
   try {
     const admin = await getAdminSession(req);
@@ -42,6 +69,10 @@ export async function GET(req: Request) {
         },
         { status: 503 }
       );
+    }
+    const diagnostic = getProductLoadError(e);
+    if (diagnostic) {
+      return NextResponse.json({ error: diagnostic }, { status: 503 });
     }
     return NextResponse.json(
       { error: "Không thể tải danh sách mặt hàng. Vui lòng thử lại sau." },
