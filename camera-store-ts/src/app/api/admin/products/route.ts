@@ -7,6 +7,17 @@ import {
 } from "@/lib/admin-queries";
 import { getAdminSession } from "@/lib/admin-session";
 
+function isMissingProductCodeColumn(error: unknown): boolean {
+  if (typeof error !== "object" || error === null) return false;
+  return (
+    "code" in error &&
+    error.code === "ER_BAD_FIELD_ERROR" &&
+    "message" in error &&
+    typeof error.message === "string" &&
+    error.message.includes("ma_mat_hang")
+  );
+}
+
 export async function GET(req: Request) {
   try {
     const admin = await getAdminSession(req);
@@ -23,6 +34,15 @@ export async function GET(req: Request) {
     }));
   } catch (e) {
     console.error("[admin/products]", e);
+    if (isMissingProductCodeColumn(e)) {
+      return NextResponse.json(
+        {
+          error:
+            "Cơ sở dữ liệu chưa có cột mã mặt hàng. Hãy chạy database/migration_product_code.sql trên database của cửa hàng.",
+        },
+        { status: 503 }
+      );
+    }
     return NextResponse.json(
       { error: "Không thể tải danh sách mặt hàng. Vui lòng thử lại sau." },
       { status: 500 }

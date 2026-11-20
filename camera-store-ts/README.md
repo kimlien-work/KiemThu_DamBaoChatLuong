@@ -11,6 +11,8 @@ Chuyển từ đồ án PHP sang Next.js, **dùng chung database MySQL** `camera
    ```
 3. Đảm bảo database tên `camera_shop` đã có dữ liệu.
 
+Nếu đang dùng database cũ, hãy chạy file `database/migration_product_code.sql` một lần trên đúng database mà ứng dụng kết nối (MySQL local hoặc cloud). File này bổ sung mã mặt hàng mà trang quản lý sản phẩm cần. Bỏ qua bước này nếu cột `ma_mat_hang` đã tồn tại.
+
 ## 2. Cấu hình kết nối
 
 File `.env` (đã có sẵn, sửa nếu cần):
