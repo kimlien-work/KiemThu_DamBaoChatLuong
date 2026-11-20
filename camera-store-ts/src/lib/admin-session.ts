@@ -7,15 +7,22 @@ export const ADMIN_SESSION_MAX_AGE = 8 * 60 * 60;
 
 const sessionRuntime = globalThis as typeof globalThis & { adminSessionSecret?: string };
 
-function getSessionSecret(): string {
-  const secret = process.env.ADMIN_SESSION_SECRET;
+export class SessionConfigurationError extends Error {
+  constructor() {
+    super("Admin session signing configuration is missing or invalid.");
+    this.name = "SessionConfigurationError";
+  }
+}
+
+export function getSessionSecret(): string {
+  const secret = process.env.ADMIN_SESSION_SECRET?.trim();
   if (secret && secret.length >= 32) return secret;
   if (process.env.NODE_ENV !== "production") {
     sessionRuntime.adminSessionSecret ??= randomBytes(32).toString("hex");
     return sessionRuntime.adminSessionSecret;
   }
   if (!secret || secret.length < 32) {
-    throw new Error("ADMIN_SESSION_SECRET phải được cấu hình với ít nhất 32 ký tự.");
+    throw new SessionConfigurationError();
   }
   return secret;
 }

@@ -4,6 +4,7 @@ import {
   ADMIN_SESSION_COOKIE,
   ADMIN_SESSION_MAX_AGE,
   createAdminSessionToken,
+  SessionConfigurationError,
 } from "@/lib/admin-session";
 
 export async function POST(req: Request) {
@@ -34,18 +35,16 @@ export async function POST(req: Request) {
     });
     return response;
   } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e);
-    console.error("[admin/login]", msg);
-    if (msg.includes("ADMIN_SESSION_SECRET")) {
+    if (e instanceof SessionConfigurationError) {
+      console.error("[admin/login] Session configuration error");
       return NextResponse.json(
-        { error: "Máy chủ chưa cấu hình ADMIN_SESSION_SECRET để tạo phiên đăng nhập" },
+        { error: "Hệ thống đăng nhập đang gặp sự cố. Vui lòng thử lại sau." },
         { status: 500 }
       );
     }
+    console.error("[admin/login] Unexpected login error");
     return NextResponse.json(
-      {
-        error: `Lỗi DB: ${msg}. Kiểm tra env DB_* trên Vercel và SSL Aiven.`,
-      },
+      { error: "Hệ thống đăng nhập đang gặp sự cố. Vui lòng thử lại sau." },
       { status: 500 }
     );
   }
