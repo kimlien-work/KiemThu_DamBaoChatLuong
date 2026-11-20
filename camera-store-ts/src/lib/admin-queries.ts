@@ -296,7 +296,9 @@ export async function adminGetOrders(options: {
 
 export async function adminUpdateOrderStatus(id: number, trangthai: number): Promise<void> {
   if (![0, 1, 2, 3].includes(trangthai)) {
-    throw new Error("Trạng thái đơn hàng không hợp lệ");
+    const error = new Error("Trạng thái đơn hàng không hợp lệ.");
+    (error as Error & { status?: number }).status = 400;
+    throw error;
   }
 
   const pool = getPool();
@@ -308,9 +310,24 @@ export async function adminUpdateOrderStatus(id: number, trangthai: number): Pro
       [id]
     );
     const orders = rows as { id: number; khach_hang_id: number; tongtien: number; trangthai: number }[];
-    if (orders.length === 0) throw new Error("Đơn hàng không tồn tại");
+    if (orders.length === 0) {
+      const error = new Error("Đơn hàng không tồn tại.");
+      (error as Error & { status?: number }).status = 404;
+      throw error;
+    }
 
     const order = orders[0];
+    const allowedTransitions: Record<number, number[]> = {
+      0: [1, 3],
+      1: [2, 3],
+      2: [3],
+      3: [],
+    };
+    if (!allowedTransitions[order.trangthai]?.includes(trangthai)) {
+      const error = new Error("Trạng thái đơn hàng không hợp lệ để thực hiện thao tác.");
+      (error as Error & { status?: number }).status = 409;
+      throw error;
+    }
     if (order.trangthai === trangthai) {
       await conn.commit();
       return;

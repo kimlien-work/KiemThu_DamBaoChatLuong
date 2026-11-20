@@ -14,8 +14,11 @@ export default function AdminOrdersPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [pendingAction, setPendingAction] = useState<{ id: number; status: number; title: string } | null>(null);
+  const [processingId, setProcessingId] = useState<number | null>(null);
   const { admin } = useAdminAuth();
   const isAdmin = admin?.chucvu_id === 1;
+  const canUpdateOrders = Boolean(admin);
 
   const load = async (keyword = "") => {
     setLoading(true);
@@ -53,22 +56,33 @@ export default function AdminOrdersPage() {
   };
 
   const updateStatus = async (id: number, trangthai: number) => {
-    if (!isAdmin) return;
-    const res = await fetch("/api/admin/orders", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, trangthai }),
-    });
-    if (!res.ok) {
+    if (!canUpdateOrders || processingId !== null) return;
+    setProcessingId(id);
+    setError("");
+    try {
+      const res = await fetch("/api/admin/orders", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, trangthai }),
+      });
       const data = await res.json();
-      setError(data.error || "Không thể cập nhật trạng thái đơn hàng.");
-      return;
+      if (!res.ok) throw new Error(data.error || "Không thể cập nhật trạng thái đơn hàng.");
+      await load(searchQuery);
+      if (detail?.id === id) {
+        const r = await fetch(`/api/admin/orders?id=${id}`);
+        if (r.ok) setDetail(await r.json());
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Không thể cập nhật trạng thái đơn hàng.");
+    } finally {
+      setProcessingId(null);
+      setPendingAction(null);
     }
-    load(searchQuery);
-    if (detail?.id === id) {
-      const r = await fetch(`/api/admin/orders?id=${id}`);
-      if (r.ok) setDetail(await r.json());
-    }
+  };
+
+  const requestStatusUpdate = (id: number, status: number, title: string) => {
+    if (!canUpdateOrders || processingId !== null) return;
+    setPendingAction({ id, status, title });
   };
 
   const viewDetail = async (id: number) => {
@@ -172,14 +186,32 @@ export default function AdminOrdersPage() {
                 <td className="p-3 space-x-1">
                   <button onClick={() => viewDetail(o.id)} className="text-cyan-600 hover:underline text-xs">Chi tiết</button>
                   <Link href={`/admin/orders/${o.id}`} className="text-slate-500 hover:underline text-xs">Mở trang</Link>
-                  {isAdmin && o.trangthai === 0 && (
+                  {canUpdateOrders && o.trangthai === 0 && (
                     <>
-                      <button onClick={() => updateStatus(o.id, 1)} className="text-blue-600 hover:underline text-xs">Duyệt & Giao</button>
-                      <button onClick={() => updateStatus(o.id, 3)} className="text-red-600 hover:underline text-xs">Hủy</button>
+                      <button
+                        disabled={processingId === o.id}
+                        onClick={() => requestStatusUpdate(o.id, 1, "Bạn có chắc chắn muốn duyệt đơn hàng này không?")}
+                        className="text-blue-600 hover:underline text-xs disabled:opacity-50"
+                      >
+                        Duyệt & Giao
+                      </button>
+                      <button
+                        disabled={processingId === o.id}
+                        onClick={() => requestStatusUpdate(o.id, 3, "Bạn có chắc chắn muốn hủy đơn hàng này không?")}
+                        className="text-red-600 hover:underline text-xs disabled:opacity-50"
+                      >
+                        Hủy
+                      </button>
                     </>
                   )}
-                  {isAdmin && o.trangthai === 1 && (
-                    <button onClick={() => updateStatus(o.id, 2)} className="text-green-600 hover:underline text-xs">Hoàn tất</button>
+                  {canUpdateOrders && o.trangthai === 1 && (
+                    <button
+                      disabled={processingId === o.id}
+                      onClick={() => requestStatusUpdate(o.id, 2, "Bạn có chắc chắn muốn hoàn tất đơn hàng này không?")}
+                      className="text-green-600 hover:underline text-xs disabled:opacity-50"
+                    >
+                      Hoàn tất
+                    </button>
                   )}
                 </td>
               </tr>
@@ -218,6 +250,45 @@ export default function AdminOrdersPage() {
             </table>
             <p className="text-right font-bold text-red-600 mt-2">Tổng: {formatPrice(detail.tongtien)}</p>
             <button onClick={() => setDetail(null)} className="mt-4 w-full border py-2 rounded-lg">Đóng</button>
+          </div>
+        </div>
+      )}
+      {pendingAction && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="order-action-title"
+          onClick={() => {
+            if (processingId === null) setPendingAction(null);
+          }}
+        >
+          <div
+            className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h2 id="order-action-title" className="text-lg font-bold text-slate-800">
+              Xác nhận thay đổi trạng thái
+            </h2>
+            <p className="mt-2 text-sm text-slate-600">{pendingAction.title}</p>
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                disabled={processingId !== null}
+                onClick={() => setPendingAction(null)}
+                className="rounded-lg border px-4 py-2 text-sm disabled:opacity-50"
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                disabled={processingId !== null}
+                onClick={() => updateStatus(pendingAction.id, pendingAction.status)}
+                className="rounded-lg bg-cyan-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+              >
+                {processingId !== null ? "Đang xử lý..." : "Xác nhận"}
+              </button>
+            </div>
           </div>
         </div>
       )}
