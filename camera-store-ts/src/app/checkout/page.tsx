@@ -5,12 +5,14 @@ import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import type { Product } from "@/types";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, isValidAddress, isValidFullName, isValidPhoneNumber } from "@/lib/utils";
 
 export default function CheckoutPage() {
   const { cart, clearCart } = useCart();
   const { user } = useAuth();
   const router = useRouter();
+  const [nguoiNhan, setNguoiNhan] = useState("");
+  const [sdtNhan, setSdtNhan] = useState("");
   const [diachi, setDiachi] = useState("");
   const [ghichu, setGhichu] = useState("");
   const [products, setProducts] = useState<Product[]>([]);
@@ -19,7 +21,10 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (user?.dia_chi) setDiachi(user.dia_chi);
+    if (!user) return;
+    setNguoiNhan(user.ten || "");
+    setSdtNhan(user.dien_thoai || "");
+    if (user.dia_chi) setDiachi(user.dia_chi);
   }, [user]);
 
   useEffect(() => {
@@ -58,7 +63,12 @@ export default function CheckoutPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!nguoiNhan.trim()) { alert("Vui lòng nhập họ tên người nhận"); return; }
+    if (!isValidFullName(nguoiNhan)) { alert("Họ tên người nhận tối đa 100 ký tự"); return; }
+    if (!sdtNhan.trim()) { alert("Vui lòng nhập số điện thoại người nhận"); return; }
+    if (!isValidPhoneNumber(sdtNhan)) { alert("Số điện thoại người nhận phải có từ 10 đến 12 chữ số"); return; }
     if (!diachi.trim()) { alert("Vui lòng nhập địa chỉ giao hàng"); return; }
+    if (!isValidAddress(diachi)) { alert("Địa chỉ giao hàng tối đa 255 ký tự"); return; }
     const overStock = items.find((item) => item.soluong > item.soluongton);
     if (overStock) {
       alert(`Sản phẩm "${overStock.tenmathang}" chỉ còn ${overStock.soluongton} sản phẩm trong kho`);
@@ -73,7 +83,8 @@ export default function CheckoutPage() {
         body: JSON.stringify({
           khach_hang_id: user.id,
           tongtien,
-          ghichu: ghichu || `Giao tới: ${diachi}`,
+          nguoi_nhan: { ten: nguoiNhan.trim(), dien_thoai: sdtNhan, diachi: diachi.trim() },
+          ghichu,
           items: items.map((i) => ({
             mathang_id: i.id,
             dongia: Number(i.giaban),
@@ -114,12 +125,12 @@ export default function CheckoutPage() {
       <h1 className="text-2xl font-bold text-cyan-700 mb-6">Thanh toán (COD)</h1>
       <form onSubmit={handleSubmit} className="space-y-4 bg-white border rounded-lg p-6 shadow-sm">
         <div>
-          <label className="block text-sm font-medium mb-1">Họ tên</label>
-          <input type="text" value={user.ten} disabled className="w-full border rounded px-3 py-2 bg-gray-50" />
+          <label className="block text-sm font-medium mb-1">Họ tên người nhận *</label>
+          <input type="text" value={nguoiNhan} onChange={(e) => setNguoiNhan(e.target.value)} className="w-full border rounded px-3 py-2" required />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">Điện thoại</label>
-          <input type="text" value={user.dien_thoai} disabled className="w-full border rounded px-3 py-2 bg-gray-50" />
+          <label className="block text-sm font-medium mb-1">Số điện thoại người nhận *</label>
+          <input type="tel" value={sdtNhan} onChange={(e) => setSdtNhan(e.target.value)} className="w-full border rounded px-3 py-2" required />
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">Địa chỉ giao hàng *</label>

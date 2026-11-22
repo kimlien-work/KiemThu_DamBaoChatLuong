@@ -16,7 +16,7 @@ export interface AuthUser {
 interface AuthContextType {
   user: AuthUser | null;
   authLoaded: boolean;
-  login: (username: string, password: string) => Promise<boolean>;
+  login: (username: string, password: string) => Promise<string | null>;
   register: (data: {
     ten: string;
     tendangnhap: string;
@@ -59,10 +59,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, password }),
     });
-    if (!res.ok) return false;
-    const data = await res.json();
-    setUser(data.user);
-    return true;
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) return json.error || "Tài khoản hoặc mật khẩu không đúng!";
+    setUser(json.user);
+    return null;
   };
 
   const register = async (data: {

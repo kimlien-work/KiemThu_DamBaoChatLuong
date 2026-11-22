@@ -10,6 +10,7 @@ export default function ProfilePage() {
   const router = useRouter();
   const [form, setForm] = useState({ ten: "", email: "", dien_thoai: "", dia_chi: "" });
   const [msg, setMsg] = useState("");
+  const [msgIsError, setMsgIsError] = useState(false);
   const [passwordForm, setPasswordForm] = useState({ current: "", next: "", confirm: "" });
   const [showPasswords, setShowPasswords] = useState(false);
   const [passwordMsg, setPasswordMsg] = useState("");
@@ -37,9 +38,22 @@ export default function ProfilePage() {
 
   if (!user) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    updateProfile(form);
+    setMsg("");
+    setMsgIsError(false);
+    const res = await fetch("/api/customer/profile", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ customerId: user.id, ...form }),
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      setMsgIsError(true);
+      setMsg(json.error || "Cập nhật thất bại");
+      return;
+    }
+    updateProfile(json.user);
     setMsg("Cập nhật thành công!");
   };
 
@@ -100,7 +114,11 @@ export default function ProfilePage() {
         </div>
       )}
       <form onSubmit={handleSubmit} className="bg-white border rounded-lg p-6 shadow-sm space-y-4">
-        {msg && <div className="bg-green-50 text-green-700 text-sm p-3 rounded">{msg}</div>}
+        {msg && (
+          <div className={`${msgIsError ? "bg-red-50 text-red-600" : "bg-green-50 text-green-700"} text-sm p-3 rounded`}>
+            {msg}
+          </div>
+        )}
         <div>
           <label className="block text-sm font-medium mb-1">Tên đăng nhập</label>
           <input type="text" value={user.tendangnhap || ""} disabled className="w-full border rounded px-3 py-2 bg-gray-50" />

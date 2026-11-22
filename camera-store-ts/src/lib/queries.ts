@@ -108,6 +108,46 @@ export async function findCustomerByUsername(username: string): Promise<Customer
   );
 }
 
+export async function getCustomerById(id: number): Promise<Omit<Customer, "mat_khau"> | null> {
+  return queryOne<Omit<Customer, "mat_khau">>(
+    `SELECT id, ten, tendangnhap, email, dien_thoai, dia_chi, diem_tich_luy, trangthai
+     FROM khach_hang WHERE id = ? AND trangthai = 1`,
+    [id]
+  );
+}
+
+/** Kiểm tra email/số điện thoại đã thuộc khách hàng khác chưa */
+export async function findCustomerContactConflict(
+  email: string | null,
+  dienThoai: string,
+  excludeId?: number
+): Promise<"email" | "phone" | null> {
+  const exclude = excludeId ?? 0;
+  if (email) {
+    const byEmail = await queryOne<{ id: number }>(
+      "SELECT id FROM khach_hang WHERE email = ? AND id <> ? LIMIT 1",
+      [email, exclude]
+    );
+    if (byEmail) return "email";
+  }
+  const byPhone = await queryOne<{ id: number }>(
+    "SELECT id FROM khach_hang WHERE dien_thoai = ? AND id <> ? LIMIT 1",
+    [dienThoai, exclude]
+  );
+  return byPhone ? "phone" : null;
+}
+
+/** Cập nhật hồ sơ: ghi đầy đủ giá trị (email rỗng được lưu thành NULL) */
+export async function updateCustomerProfile(
+  id: number,
+  data: { ten: string; email: string | null; dien_thoai: string; dia_chi: string | null }
+): Promise<void> {
+  await query(
+    "UPDATE khach_hang SET ten = ?, email = ?, dien_thoai = ?, dia_chi = ? WHERE id = ? AND trangthai = 1",
+    [data.ten, data.email, data.dien_thoai, data.dia_chi, id]
+  );
+}
+
 export async function createCustomer(data: {
   ten: string;
   tendangnhap: string;

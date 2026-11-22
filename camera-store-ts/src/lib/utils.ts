@@ -38,3 +38,25 @@ export function isValidPassword(value: string): boolean {
     /[^\p{L}\p{N}\s]/u.test(value)
   );
 }
+
+/** Tên đăng nhập: bắt buộc, tối đa 50 ký tự, không có khoảng trắng đầu/cuối */
+export function isValidUsername(value: string): boolean {
+  return value.length > 0 && value.length <= 50 && value === value.trim();
+}
+
+/** Họ tên: bắt buộc (sau khi cắt khoảng trắng), tối đa 100 ký tự */
+export function isValidFullName(value: string): boolean {
+  const v = value.trim();
+  return v.length > 0 && Array.from(v).length <= 100;
+}
+
+/** Địa chỉ: tối đa 255 ký tự */
+export function isValidAddress(value: string): boolean {
+  return Array.from(value.trim()).length <= 255;
+}
+
+/** Email: không bắt buộc; nếu có phải đúng định dạng và tối đa 80 ký tự */
+export function isValidOptionalEmail(value: string | null | undefined): boolean {
+  if (value === undefined || value === null || value === "") return true;
+  return typeof value === "string" && value.length <= 80 && isValidEmail(value);
+}

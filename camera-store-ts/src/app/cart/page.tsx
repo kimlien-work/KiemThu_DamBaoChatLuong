@@ -10,6 +10,7 @@ import { imageUrl, formatPrice } from "@/lib/utils";
 
 export default function CartPage() {
   const { cart, updateQuantity, removeFromCart, clearCart } = useCart();
+  const [confirmClearAll, setConfirmClearAll] = useState(false);
   const { user } = useAuth();
   const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
@@ -111,14 +112,23 @@ export default function CartPage() {
                     max={item.soluongton}
                     value={item.soluong}
                     onChange={(e) => {
-                      const value = Number(e.target.value);
-                      if (!Number.isFinite(value)) return;
+                      const raw = e.target.value.trim();
+                      if (raw === "") return;
+                      const value = Number(raw);
+                      if (!Number.isFinite(value) || !Number.isInteger(value)) {
+                        alert("Số lượng phải là số nguyên");
+                        return;
+                      }
+                      if (value < 1) {
+                        updateQuantity(item.id, 1);
+                        return;
+                      }
                       if (value > item.soluongton) {
                         alert(`Sản phẩm "${item.tenmathang}" chỉ còn ${item.soluongton} sản phẩm trong kho`);
                         updateQuantity(item.id, item.soluongton);
                         return;
                       }
-                      updateQuantity(item.id, Math.max(1, Math.floor(value)));
+                      updateQuantity(item.id, value);
                     }}
                     className="w-16 border rounded text-center py-1"
                   />
@@ -148,10 +158,52 @@ export default function CartPage() {
         </table>
       </div>
       <div className="flex flex-wrap gap-3 mt-6 justify-end">
-        <button onClick={clearCart} className="px-5 py-2 border border-gray-300 rounded hover:bg-gray-100">Xóa giỏ hàng</button>
+        <button onClick={() => setConfirmClearAll(true)} className="px-5 py-2 border border-gray-300 rounded hover:bg-gray-100">Xóa giỏ hàng</button>
         <Link href="/" className="px-5 py-2 border border-cyan-500 text-cyan-600 rounded hover:bg-cyan-50">Tiếp tục mua</Link>
         <button onClick={handleCheckout} className="px-6 py-2 bg-red-500 text-white rounded font-bold hover:bg-red-600">Thanh toán</button>
       </div>
+
+      {confirmClearAll && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4"
+          onClick={() => setConfirmClearAll(false)}
+          role="presentation"
+        >
+          <div
+            className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="clear-cart-title"
+          >
+            <h2 id="clear-cart-title" className="text-lg font-bold text-slate-800">
+              Xác nhận xóa toàn bộ giỏ hàng
+            </h2>
+            <p className="mt-2 text-sm text-slate-600">
+              Bạn có chắc muốn xóa toàn bộ {items.length} sản phẩm khỏi giỏ hàng?
+            </p>
+            <div className="mt-5 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setConfirmClearAll(false)}
+                className="rounded-lg border border-slate-300 px-4 py-2 text-slate-700 hover:bg-slate-50"
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  clearCart();
+                  setConfirmClearAll(false);
+                }}
+                className="rounded-lg bg-red-500 px-4 py-2 font-medium text-white hover:bg-red-600"
+              >
+                Xác nhận
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {pendingRemove && (
         <div

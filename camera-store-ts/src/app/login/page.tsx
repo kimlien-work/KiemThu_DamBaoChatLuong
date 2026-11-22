@@ -18,10 +18,10 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     setError("");
-    const ok = await login(username, password);
+    const err = await login(username, password);
     setLoading(false);
-    if (ok) router.push("/");
-    else setError("Tài khoản hoặc mật khẩu không đúng!");
+    if (err) setError(err);
+    else router.push("/");
   };
 
   return (
